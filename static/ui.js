@@ -316,9 +316,13 @@
         document.querySelectorAll('[data-glider]').forEach((c) => glider(c, c.dataset.glider));
         watchNumbers();
         // icons that fail to load hide themselves (no inline onerror: the page runs under a strict CSP)
+        // Hero portraits in the report list, players table and moments are marked data-drop: a missing one
+        // is removed so the letter underneath shows (the CSP blocks inline onerror="this.remove()").
         document.addEventListener('error', (e) => {
             const t = e.target;
-            if (t && t.tagName === 'IMG' && t.classList.contains('player-selector-icon')) t.style.display = 'none';
+            if (!t || t.tagName !== 'IMG') return;
+            if (t.classList.contains('player-selector-icon')) t.style.display = 'none';
+            else if (t.hasAttribute('data-drop') || t.closest('.rep-av, .pt-av')) t.remove();
         }, true);
         requestAnimationFrame(() => document.documentElement.classList.add('ready'));
     }

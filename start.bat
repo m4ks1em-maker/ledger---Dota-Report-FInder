@@ -31,7 +31,7 @@ cls
 :run
 node gate\gate.js
 if %errorlevel%==75 (
-  echo  Updated. Starting DotaTraker again...
+  echo  Restarting DotaTraker...
   set LEDGER_OPEN=0
   goto run
 )

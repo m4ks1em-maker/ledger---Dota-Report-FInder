@@ -270,8 +270,10 @@ function ledgerTimeSecs(t) {
     if (t == null || t === '') return 0;
     if (typeof t === 'number') return isFinite(t) ? t : 0;
     const s = String(t).trim();
-    const neg = /^-/.test(s);
-    const parts = s.replace(/^[-+]/, '').split(':').map(x => parseFloat(x));
+    // the engine (Go) prints times before 0:00 as "00:-05" or "-1:-30" (both parts negative),
+    // so any minus sign means "before the horn"; "-1:-30" is -90 s, not -30 s
+    const neg = s.indexOf('-') >= 0;
+    const parts = s.replace(/[-+\s]/g, '').split(':').map(x => parseFloat(x));
     if (!parts.length || parts.some(x => !isFinite(x))) return 0;
     const v = parts.reduce((acc, p) => acc * 60 + p, 0);
     return neg ? -v : v;
@@ -754,6 +756,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let lastSteamStatus = null;
     let lastSteamStatusText = null;
+    let steamPollMs = 0, steamPollBusy = false, steamFastPollUntil = 0;
+    // (re)arm the status poll only when its pace changes, so a poll never restarts its own timer
+    function setSteamPoll(ms) {
+        if (steamPollingInterval && steamPollMs === ms) return;
+        if (steamPollingInterval) clearInterval(steamPollingInterval);
+        steamPollMs = ms;
+        steamPollingInterval = setInterval(pollSteamStatus, ms);
+    }
     
     function updateSteamUI(status, text, errorMessage) {
         const statusText = `Status: ${text}`;
@@ -792,11 +802,13 @@ document.addEventListener('DOMContentLoaded', () => {
             errorDisplay.style.display = 'none';
         }
         
-        if (connectingTimeoutId) {
+        // The "stuck" fallbacks below must survive the 2-second status polls: they used to be
+        // cleared and re-armed on every poll, so they never reached their 20 s / 15 s and never fired.
+        if (status !== 1 && connectingTimeoutId) {
             clearTimeout(connectingTimeoutId);
             connectingTimeoutId = null;
         }
-        if (submittingTimeoutId) {
+        if (status !== 2 && submittingTimeoutId) {
             clearTimeout(submittingTimeoutId);
             submittingTimeoutId = null;
         }
@@ -810,10 +822,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 steamDisconnectBtn.style.display = 'none';
                 lastSteamStatus = 1;
             }
-            if (steamPollingInterval) clearInterval(steamPollingInterval);
-            steamPollingInterval = setInterval(pollSteamStatus, 2000);
+            setSteamPoll(2000);
             
-            connectingTimeoutId = setTimeout(() => {
+            if (!connectingTimeoutId) connectingTimeoutId = setTimeout(() => {
+                connectingTimeoutId = null;
                 if (steamLoginBtn.disabled && srcText(steamLoginBtn) === 'Connecting...') {
                     console.warn('Connection timeout - re-enabling button as fallback');
                     steamLoginBtn.disabled = false;
@@ -837,7 +849,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('steamGuardGroup element not found!');
                 }
                 if (srcText(steamLoginBtn) === 'Submitting Code...') {
+                    if (submittingTimeoutId) clearTimeout(submittingTimeoutId);
                     submittingTimeoutId = setTimeout(() => {
+                        submittingTimeoutId = null;
                         if (steamLoginBtn.disabled && srcText(steamLoginBtn) === 'Submitting Code...') {
                             console.warn('Submit code timeout - re-enabling button as fallback');
                             steamLoginBtn.disabled = false;
@@ -851,8 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 steamDisconnectBtn.style.display = 'none';
                 lastSteamStatus = 2;
             }
-            if (steamPollingInterval) clearInterval(steamPollingInterval);
-            steamPollingInterval = setInterval(pollSteamStatus, 2000);
+            setSteamPoll(2000);
         } else if (status === 3 || status === 4) {
              if (lastSteamStatus !== status) {
                  if (steamStatusText) steamStatusText.style.color = 'var(--radiant)';
@@ -865,8 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      fetchConductScorecard();
                  }
              }
-             if (steamPollingInterval) clearInterval(steamPollingInterval);
-             steamPollingInterval = setInterval(pollSteamStatus, 10000);
+             setSteamPoll(10000);
         } else if (status === 5) { // Rate Limited
              if (lastSteamStatus !== 5) {
                  if (steamStatusText) {
@@ -879,8 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  steamDisconnectBtn.style.display = 'inline-block';
                  lastSteamStatus = 5;
              }
-             if (steamPollingInterval) clearInterval(steamPollingInterval);
-             steamPollingInterval = setInterval(pollSteamStatus, 60000);
+             setSteamPoll(60000);
         } else {
             if (lastSteamStatus !== status) {
                 if (steamStatusText) steamStatusText.style.color = '';
@@ -893,8 +904,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (conductSection) conductSection.classList.add('hidden');
                 lastSteamStatus = status;
             }
-            if (steamPollingInterval) clearInterval(steamPollingInterval);
-            steamPollingInterval = setInterval(pollSteamStatus, 2000);
+            // not connected and nobody is signing in: no need to ask the engine every 2 seconds
+            setSteamPoll(Date.now() < steamFastPollUntil ? 2000 : 10000);
         }
     }
 
@@ -1331,7 +1342,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         matchID: result.MatchID
                     };
                     
-                    if (report.Confirmed) {
+                    if (report.Confirmed !== false) {
                         confirmedPlayerReportCounts.set(playerKey, (confirmedPlayerReportCounts.get(playerKey) || 0) + 1);
                         confirmedTimelineData.push(timelinePoint);
                     } else {
@@ -1591,21 +1602,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function pollSteamStatus() {
-        fetchWithRetry('/api/steam/status', {}, 2, 500)
+        // one poll at a time: when the engine hangs, polls used to pile up every 2 s (each waiting
+        // up to 30 s x 3 tries) and took all the browser's connections, so analysis stalled too
+        if (steamPollBusy) return;
+        steamPollBusy = true;
+        fetchWithRetry('/api/steam/status', { timeout: 8000 }, 1, 500)
             .then(res => res.json())
             .then(data => {
                 updateSteamUI(data.status, data.statusText, data.errorMessage);
                 if (window.updateDownloadMatchSteamHint) window.updateDownloadMatchSteamHint();
             })
             .catch(err => {
-                console.error('Steam status poll failed:', err);
-                // Don't show error for polling failures, just log
-            });
+                dbg('Steam status poll failed:', err);
+            })
+            .finally(() => { steamPollBusy = false; });
     }
 
     // Start polling on load
     pollSteamStatus();
-    steamPollingInterval = setInterval(pollSteamStatus, 2000);
+    setSteamPoll(2000);
 
     if (steamLoginBtn) {
         steamLoginBtn.addEventListener('click', () => {
@@ -1625,6 +1640,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const originalText = steamLoginBtn.textContent;
+        steamFastPollUntil = Date.now() + 90000;   // follow the sign-in closely for a while
+        setSteamPoll(2000);
         steamLoginBtn.disabled = true;
         steamLoginBtn.textContent = code ? 'Submitting Code...' : 'Connecting...';
 
@@ -2199,10 +2216,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const matchId = filePath.split('/').pop().replace('.dem', '');
             progressText.textContent = `Processing ${processedCount + 1} / ${selectedIds.length}: ${matchId}`;
 
+            // one replay that the engine never answers for must not freeze the whole run
+            const parseCtl = new AbortController();
+            const parseTimer = setTimeout(() => parseCtl.abort(), 10 * 60000);
             try {
                 const res = await fetch('/api/parse', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    signal: parseCtl.signal,
                     body: JSON.stringify({
                         matchId: matchId,
                         filePath: filePath,
@@ -2215,6 +2236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!res.ok) throw new Error(await res.text());
 
                 const resultText = await res.text();
+                clearTimeout(parseTimer);
                 const resultTextFixed = resultText.replace(/"TargetSteamID":\s*(\d+)/g, '"TargetSteamID":"$1"')
                     .replace(/"SteamID":\s*(\d+)/g, '"SteamID":"$1"');
                 const result = JSON.parse(resultTextFixed);
@@ -2262,7 +2284,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             matchID: result.MatchID
                         };
 
-                        if (report.Confirmed) {
+                        // the engine has no "Confirmed" field: only an explicit false is unconfirmed,
+                        // the same rule the list, the verdict and the stats use
+                        if (report.Confirmed !== false) {
                             confirmedPlayerReportCounts.set(playerKey, (confirmedPlayerReportCounts.get(playerKey) || 0) + 1);
                             confirmedTimelineData.push(timelinePoint);
                         } else {
@@ -2274,7 +2298,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (err) {
                 console.error(`Error processing ${matchId} (${filePath}):`, err);
-                failures.push(matchId + ': ' + String((err && err.message) || err).replace(/\s+/g, ' ').slice(0, 140));
+                const why = err && err.name === 'AbortError' ? 'the engine did not answer in 10 minutes' : String((err && err.message) || err);
+                failures.push(matchId + ': ' + why.replace(/\s+/g, ' ').slice(0, 140));
+            } finally {
+                clearTimeout(parseTimer);
             }
 
             processedCount++;
@@ -2949,7 +2976,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const iconUrl = getHeroIconUrl(hero || r.TargetHero || r.Hero);
             const avInner = escTL((primary || '?').trim().charAt(0).toUpperCase())
-                + (iconUrl ? '<img src="' + escTL(iconUrl) + '" alt="" loading="lazy" onerror="this.remove()">' : '');
+                + (iconUrl ? '<img src="' + escTL(iconUrl) + '" alt="" loading="lazy" data-drop="1">' : '');
 
             // The engine could not pin this report down exactly: say so, and list who else it might be.
             const cands = ledgerCandidates(r);

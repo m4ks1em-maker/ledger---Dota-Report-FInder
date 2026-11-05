@@ -163,6 +163,8 @@
                 res.present++;
                 const hero = me ? me.Hero : (incoming[0] && incoming[0].TargetHero) || (outgoing[0] && outgoing[0].Hero) || '';
                 const group = { matchID: m.matchID, hero };
+                const byTime = (a, b) => (window.LedgerReports ? window.LedgerReports.secs(a.Time) - window.LedgerReports.secs(b.Time) : 0);
+                incoming.sort(byTime); outgoing.sort(byTime);
                 incoming.forEach((r) => res.inc.push({ g: group, time: r.Time, name: r.Name || ('Slot ' + r.Slot), sid: String(r.SteamID || ''), hero: r.Hero || '', side: r.Team === 'FRIENDLY' ? 'Teammate' : 'Enemy', ok: r.Confirmed !== false }));
                 outgoing.forEach((r) => {
                     const t = bySlot(r.TargetSlot), me2 = bySlot(r.Slot);
@@ -593,7 +595,9 @@
             msg(T('Analysing…'));
             window.ledgerPathOverride = paths; window.ledgerNoJump = true; window.ledgerSilentDone = true;
             const sid = $('steam-id'); if (sid) sid.value = account;
-            const done = new Promise((res) => document.addEventListener('ledger:analysis-done', res, { once: true }));
+            // the analysis always ends with ledger:analysis-done; the timer is only a safety net so the
+            // button can never stay locked if something on the page broke halfway
+            const done = new Promise((res) => { document.addEventListener('ledger:analysis-done', res, { once: true }); setTimeout(res, 30 * 60000); });
             $('start-parse').click();
             await done;
             window.ledgerPathOverride = null; window.ledgerSilentDone = false; busy = false; count(); msg('');
@@ -652,8 +656,9 @@
     (function account() {
         const T = (x) => (window.LedgerI18n ? window.LedgerI18n.t(x) : x);
         const DAY = 86400000;
-        let me = null, chip = null, pop = null;
-        const daysLeft = (m) => (m && m.expiresAt ? Math.max(0, Math.ceil((m.expiresAt - Date.now()) / DAY)) : null);
+        let me = null, chip = null, pop = null, clockSkew = 0;
+        // count days on the key server's clock (the gate sends it as serverTime), not this PC's
+        const daysLeft = (m) => (m && m.expiresAt ? Math.max(0, Math.ceil((m.expiresAt - (Date.now() + clockSkew)) / DAY)) : null);
         const fmtDate = (t) => new Date(t).toLocaleDateString(window.LedgerI18n && window.LedgerI18n.lang === 'ru' ? 'ru-RU' : undefined, { day: 'numeric', month: 'long', year: 'numeric' });
         const tgUrl = (m) => 'https://t.me/' + encodeURIComponent((m && m.telegram) || 'm4ks1em');
 
@@ -777,7 +782,7 @@
         function load() {
             return fetch('/_ledger/me', { credentials: 'same-origin', cache: 'no-store' })
                 .then((r) => (r.ok ? r.json() : null))
-                .then((m) => { if (m) { me = m; paint(); paintSteam(); paintUpdate(); } })
+                .then((m) => { if (m) { me = m; clockSkew = Number(m.serverTime) > 0 ? Number(m.serverTime) - Date.now() : 0; paint(); paintSteam(); paintUpdate(); } })
                 .catch(() => {});
         }
         load();
@@ -812,9 +817,13 @@
             if (s.lastRun) out.appendChild(document.createTextNode(' · ' + T('last check') + ' ' + ago(s.lastRun)));
             if (s.downloadedTotal) out.appendChild(document.createTextNode(' · ' + T('downloaded') + ' ' + s.downloadedTotal));
             clearTimeout(timer);
-            timer = setTimeout(load, s.running ? 2000 : 30000);
+            timer = setTimeout(() => { timer = null; load(); }, s.running ? 2000 : 30000);
         }
-        function load() { return fetch('/_ledger/sync', { credentials: 'same-origin', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then(show).catch(() => {}); }
+        // keep polling even after a failed request (gate restarting, update): it used to stop for good
+        function load() {
+            return fetch('/_ledger/sync', { credentials: 'same-origin', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then(show)
+                .catch(() => {}).finally(() => { if (!timer) timer = setTimeout(() => { timer = null; load(); }, 30000); });
+        }
         function save(patch) {
             return fetch('/_ledger/sync', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Ledger': '1' }, body: JSON.stringify(patch) })
                 .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) { LedgerUI.toast(j.error || 'Could not save auto-sync.', 'bad'); load(); return; } show(j); })
@@ -867,7 +876,9 @@
     })();
     const T = (x) => (window.LedgerI18n ? window.LedgerI18n.t(x) : x);
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-    const FLAME = /\b(рак|дно|днищ|ливер|слил|слей|нуб|нубас|даун|дебил|идиот|тупо?й|тупая|кал|говн|сос[иьё]|изи|изич|носок|бот|repor|report|репорт|trash|noob|ez|easy|idiot|kys|report)\b/i;
+    // \b only knows Latin letters, so the old /\b(рак|…)\b/ never matched a single Russian word.
+    // Word edges are spelled out with Unicode letter classes instead; stems take any ending (нубас, говно).
+    const FLAME = /(?<![\p{L}\p{N}_])(?:рак|дно|днищ\p{L}*|ливер\p{L}*|слил\p{L}*|слей|нуб\p{L}*|даун\p{L}*|дебил\p{L}*|идиот\p{L}*|туп(?:ой|ая|ые|ица)|кал|говн\p{L}*|сос(?:и|ите|ать|ёшь|ешь)|изи|изич|носок|бот|репорт\p{L}*|report\p{L}*|trash|noob\p{L}*|ez|easy|idiot\p{L}*|kys)(?![\p{L}\p{N}_])/iu;
     const teamClass = (t) => (t === 2 ? 'r' : t === 3 ? 'd' : '');
 
     function who(x) { return x.Name || x.Hero || (x.Slot >= 0 ? T('Slot') + ' ' + x.Slot : '?'); }
@@ -886,7 +897,7 @@
             const row = document.createElement('div'); row.className = 'rep-row ' + (ally ? 'ally' : 'enemy');
             const iconUrl = (typeof getHeroIconUrl === 'function') ? getHeroIconUrl(hero || r.TargetHero || r.Hero) : null;
             const av = esc((reporter || '?').trim().charAt(0).toUpperCase())
-                + (iconUrl ? '<img src="' + esc(iconUrl) + '" alt="" loading="lazy" onerror="this.remove()">' : '');
+                + (iconUrl ? '<img src="' + esc(iconUrl) + '" alt="" loading="lazy" data-drop="1">' : '');
             row.innerHTML =
                 '<span class="rep-time">' + esc(r.Time || '') + '</span>' +
                 '<span class="rep-av">' + av + '</span>' +
@@ -898,15 +909,12 @@
         repPane.appendChild(list);
     }
 
+    // one clock parser for every screen (handles "MM:SS", "H:MM:SS" and the engine's "00:-05" / "-1:-30")
     function clSecs(t) {
-        if (t == null) return 0;
-        const s = String(t).trim(); const neg = s.startsWith('-');
-        const p = s.replace('-', '').split(':').map(Number);
-        let v = 0;
-        if (p.length === 3) v = p[0] * 3600 + p[1] * 60 + p[2];
-        else if (p.length === 2) v = p[0] * 60 + p[1];
-        else v = Number(s) || 0;
-        return neg ? -v : v;
+        if (window.LedgerReports && window.LedgerReports.secs) return window.LedgerReports.secs(t);
+        const p = String(t == null ? '' : t).replace(/[-+\s]/g, '').split(':').map(Number);
+        const v = p.some((x) => !isFinite(x)) ? 0 : p.reduce((a, x) => a * 60 + x, 0);
+        return String(t).indexOf('-') >= 0 ? -v : v;
     }
     const WHEEL_IC = '<svg class="cl-wheel" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2"/><path d="M12 4.5v3M12 16.5v3M4.5 12h3M16.5 12h3"/></svg>';
     function wheelPhrase(e) {
@@ -1295,7 +1303,7 @@
     function avatarHTML(cls, hero, name) {
         const letter = esc((String(name || '?').trim().charAt(0) || '?').toUpperCase());
         const iconUrl = (typeof getHeroIconUrl === 'function') ? getHeroIconUrl(hero) : null;
-        return '<span class="' + cls + '">' + letter + (iconUrl ? '<img src="' + esc(iconUrl) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>';
+        return '<span class="' + cls + '">' + letter + (iconUrl ? '<img src="' + esc(iconUrl) + '" alt="" loading="lazy" data-drop="1">' : '') + '</span>';
     }
     function renderPlayersTable(m) {
         if (!ptEl) return;
@@ -1416,9 +1424,10 @@
         return null;
     };
     const fmt = (sec) => { sec = Math.max(0, Math.round(sec)); const m = Math.floor(sec / 60), s = sec % 60; return m + ':' + String(s).padStart(2, '0'); };
-    const parseT = (t) => { if (!t) return 0; const p = String(t).split(':'); return p.length === 2 ? (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0) : 0; };
+    const parseT = (t) => (window.LedgerReports && window.LedgerReports.secs ? window.LedgerReports.secs(t) : 0);
     const findMatch = (id) => { const ms = window.ledgerMatches || []; return ms.find((m) => String(m.matchID) === String(id)) || (ms.length === 1 ? ms[0] : null); };
-    const durFromReplay = (match) => { if (!match) return 0; let mx = 0; ['events', 'chat', 'reports', 'wards'].forEach((k) => { (match[k] || []).forEach((e) => { const t = parseT(e && e.Time); if (t > mx) mx = t; }); }); return mx; };
+    // wards carry PlaceTime/DeathTime, not Time: read those too, or a quiet match showed a too-short duration
+    const durFromReplay = (match) => { if (!match) return 0; let mx = 0; ['events', 'chat', 'reports', 'wards'].forEach((k) => { (match[k] || []).forEach((e) => { if (!e) return; [e.Time, e.PlaceTime, e.DeathTime].forEach((v) => { const t = parseT(v); if (t > mx) mx = t; }); }); }); return mx; };
     const reset = () => { wEl.textContent = '—'; dateEl.textContent = '—'; scoreEl.textContent = '—'; wEl.parentElement.classList.remove('win', 'lose'); };
 
     // ---- Match flow graph (gold/xp advantage over time), gold-HUD style ----

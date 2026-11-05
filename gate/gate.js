@@ -123,10 +123,25 @@ const DEVICE_NAME = (() => { try { return `${os.hostname()} (${process.platform 
 let lic = Object.assign({ token: '', license: null, lastOk: 0, lastCheck: 0, offline: false, denied: null }, readJson(LICENSE_FILE, {}));
 const saveLicense = () => { try { writeJsonAtomic(LICENSE_FILE, lic); } catch (e) { console.error('[gate] cannot save license:', e.message); } };
 
+// The key's end date is the key server's clock, not this PC's. A PC clock that runs a day late
+// kept an expired key working; one that runs early showed "expired" while the key was fine and
+// asked the server again every minute. srvNow() is "now" on the key server's clock.
+const srvNow = () => now() + (Number(lic.skew) || 0);
+function noteServerClock(dateHeader, sentAt) {
+    const t = Date.parse(dateHeader || '');
+    if (!isFinite(t)) return;
+    const skew = t - Math.round((sentAt + now()) / 2);
+    // the Date header only has whole seconds: ignore jitter, keep real differences
+    lic.skew = Math.abs(skew) < 5000 ? 0 : Math.max(-400 * DAY, Math.min(400 * DAY, skew));
+}
+
 function licenseProblem() {
     if (!lic.token || !lic.license) return lic.denied ? lic.denied.code : 'none';
-    if (lic.license.expiresAt && lic.license.expiresAt <= now()) return 'expired';
-    if (now() - (lic.lastOk || 0) > OFFLINE_GRACE) return 'offline';
+    if (lic.license.expiresAt && lic.license.expiresAt <= srvNow()) return 'expired';
+    const age = now() - (lic.lastOk || 0);
+    // a last check "in the future" means the PC clock was moved back: the 3-day offline window
+    // must not stretch forever because of that, so ask the server again
+    if (age > OFFLINE_GRACE || age < -HOUR) return 'offline';
     return null;
 }
 
@@ -150,12 +165,14 @@ function steamFields() {
 }
 
 async function keyServer(pathname, payload, timeoutMs = 15000) {
+    const sentAt = now();
     const r = await fetch(LICENSE_SERVER + pathname, {
         method: payload ? 'POST' : 'GET',
         headers: Object.assign({ 'User-Agent': `DotaTraker/${VERSION}` }, payload ? { 'Content-Type': 'application/json' } : {}),
         body: payload ? JSON.stringify(payload) : undefined,
         signal: AbortSignal.timeout(timeoutMs)
     });
+    noteServerClock(r.headers.get('date'), sentAt);
     let j = {};
     try { j = await r.json(); } catch (_) {}
     return { status: r.status, body: j };
@@ -193,7 +210,7 @@ function checkLicense() {
     return checking;
 }
 setInterval(() => { checkLicense(); }, CHECK_EVERY).unref();
-setInterval(() => { if (lic.token && lic.license && lic.license.expiresAt && lic.license.expiresAt <= now()) checkLicense(); }, MIN).unref();
+setInterval(() => { if (lic.token && lic.license && lic.license.expiresAt && lic.license.expiresAt <= srvNow()) checkLicense(); }, MIN).unref();
 
 async function refreshInfo() {
     if (!SERVER_CONFIGURED) return;
@@ -343,8 +360,14 @@ function proxy(req, res) {
         if ((ur.headers['content-type'] || '').includes('text/event-stream')) h['x-accel-buffering'] = 'no';
         res.writeHead(ur.statusCode, h);
         ur.pipe(res);
+        // the engine crashed or dropped the connection halfway: cut the browser's request too,
+        // otherwise its fetch (a replay analysis, a download) waits for an answer forever
+        const cut = () => { if (!res.writableEnded && !res.destroyed) res.destroy(); };
+        ur.on('aborted', cut);
+        ur.on('error', cut);
+        ur.on('close', () => { if (!ur.complete) cut(); });
     });
-    pr.on('error', () => { if (!res.headersSent) upstreamDown(req, res); else res.end(); });
+    pr.on('error', () => { if (!res.headersSent) upstreamDown(req, res); else if (!res.destroyed) res.destroy(); });
     res.on('close', () => pr.destroy());
     req.pipe(pr);
 }
@@ -358,6 +381,12 @@ function engine(method, apiPath, body, timeoutMs) {
         const r = http.request({ hostname: up.hostname, port: up.port || 80, path: apiPath, method, timeout: timeoutMs || 15000,
             headers: Object.assign({ Accept: 'application/json' }, data ? { 'Content-Type': 'application/json', 'Content-Length': data.length } : {}) }, (ur) => {
             const chunks = [];
+            // an engine that dies halfway through its answer sends no 'end' and no request 'error':
+            // without these the promise (and whoever awaits it, e.g. auto-sync) would hang for good
+            const broken = () => reject(new Error('engine closed the connection'));
+            ur.on('aborted', broken);
+            ur.on('error', broken);
+            ur.on('close', () => { if (!ur.complete) broken(); });
             ur.on('data', (c) => chunks.push(c));
             ur.on('end', () => {
                 const text = Buffer.concat(chunks).toString('utf8');
@@ -941,7 +970,9 @@ async function syncTick(reason) {
             for (const id of todo) {
                 syncState.message = `Downloading ${id}…`;
                 const j = enqueue(id);
-                while (j.state !== 'done' && j.state !== 'error') await sleep(700);
+                // a stuck download must not freeze auto-sync for good: give each match 20 minutes
+                const giveUp = now() + 20 * MIN;
+                while (j.state !== 'done' && j.state !== 'error' && now() < giveUp) await sleep(700);
                 if (j.state === 'done') { got++; syncState.recent.unshift({ id, t: now() }); }
                 else if (j.code === 'expired') expired++;
             }
@@ -972,7 +1003,8 @@ async function syncTick(reason) {
 setInterval(() => {
     const c = settings.sync;
     if (!c.enabled || syncState.running || licenseProblem()) return;
-    if (now() - syncState.lastRun >= Math.max(1, c.everyMin) * MIN - 2000) syncTick('timer');
+    // "lastRun in the future" = the PC clock went back: run now instead of waiting for that date
+    if (now() - syncState.lastRun >= Math.max(1, c.everyMin) * MIN - 2000 || syncState.lastRun > now() + MIN) syncTick('timer');
 }, 30000).unref();
 
 function syncApi(req, res) {
@@ -1231,7 +1263,7 @@ function meView() {
     return {
         label: l.label || '', tail: l.tail || '', status: l.status || '', expiresAt: l.expiresAt || null,
         activatedAt: l.activatedAt || null, maxDevices: l.maxDevices || 1, devices: l.devices || 1,
-        offline: !!lic.offline, lastOk: lic.lastOk || 0, telegram: TELEGRAM, github: GITHUB, version: VERSION, serverTime: now(),
+        offline: !!lic.offline, lastOk: lic.lastOk || 0, telegram: TELEGRAM, github: GITHUB, version: VERSION, serverTime: srvNow(),
         steam: steamView(), update: updateView(), engine: { rev: engineRevNow(), want: ENGINE_REV }
     };
 }
@@ -1255,7 +1287,7 @@ async function login(req, res) {
         return sendJson(res, 502, { error: DENY_TEXT.offline, code: 'offline' });
     }
     if (r.status === 200 && r.body.ok && r.body.token) {
-        lic = { token: r.body.token, license: r.body.license, lastOk: now(), lastCheck: now(), offline: false, denied: null, steamId: (settings.steam && settings.steam.id) || '' };
+        lic = { token: r.body.token, license: r.body.license, lastOk: now(), lastCheck: now(), offline: false, denied: null, steamId: (settings.steam && settings.steam.id) || '', skew: Number(lic.skew) || 0 };
         saveLicense();
         const { sid, exp } = openSession(req);
         setSessionCookie(res, sid, exp);
@@ -1305,13 +1337,17 @@ async function handle(req, res) {
         const sub = pathname.slice('/_ledger/chat/'.length);
         if (!['history', 'send', 'nick', 'moderate'].includes(sub)) { res.writeHead(404); return res.end(); }
         if (!SERVER_CONFIGURED) return sendJson(res, 503, { error: DENY_TEXT.setup, code: 'setup' });
-        if (!lic.token) return sendJson(res, 401, { error: 'Enter your key first.', code: 'unknown' });
+        // never answer chat with 401: the app treats any 401 as "signed out" and jumps to /login,
+        // and /login sends a still-valid session straight back, so the page would reload in a loop
+        if (!lic.token) return sendJson(res, 403, { error: 'Enter your key first.', code: 'unknown' });
         let b = {};
         try { b = await readBody(req); } catch (_) { return sendJson(res, 400, { error: 'Bad request' }); }
         try {
             const payload = Object.assign({}, b, { token: lic.token, device: DEVICE_ID });
             const { status, body } = await keyServer('/v1/chat/' + sub, payload, 12000);
-            return sendJson(res, status, body);
+            if (status === 401) { checkLicense(); return sendJson(res, 403, Object.assign({ code: 'unknown' }, body)); }
+            // the key server's "now", so the page can show a mute's end time without trusting the PC clock
+            return sendJson(res, status, (body && typeof body === 'object' && !Array.isArray(body)) ? Object.assign({ serverNow: srvNow() }, body) : body);
         } catch (_) {
             return sendJson(res, 502, { error: 'Cannot reach the chat server.', code: 'offline' });
         }
@@ -1335,13 +1371,15 @@ async function handle(req, res) {
     // ---- everything below needs a session and a working key
     const session = getSession(req);
     const problem = licenseProblem();
+    // locked out only because the server was not reached lately: try again now, not in 10 min
+    if (problem === 'offline' && lic.token && Math.abs(now() - (lic.lastCheck || 0)) > MIN) checkLicense();
     if (!session || problem) {
         if (session && problem && problem !== 'offline') { sessions.delete(session.hash); saveSessions(); }
         if (pathname.startsWith('/api/') || pathname.startsWith('/_ledger/')) return sendJson(res, 401, { error: 'Sign in required', code: problem || 'signin' });
         res.writeHead(302, { Location: '/login' });
         return res.end();
     }
-    if (lic.token && now() - (lic.lastCheck || 0) > CHECK_EVERY) checkLicense();
+    if (lic.token && Math.abs(now() - (lic.lastCheck || 0)) > CHECK_EVERY) checkLicense();
 
     if (pathname === '/_ledger/me' && method === 'GET') return sendJson(res, 200, meView());
     if (pathname === '/_ledger/me/refresh' && method === 'POST') { await checkLicense(); return licenseProblem() ? sendJson(res, 401, { error: 'Sign in required', code: licenseProblem() }) : sendJson(res, 200, meView()); }
@@ -1402,7 +1440,7 @@ server.listen(settings.port, settings.host, () => {
     setTimeout(() => checkLicense(), 1500).unref();
     setTimeout(() => { refreshSteamAvatar().then(() => checkLicense()); }, 2500).unref();
     setTimeout(() => checkUpdate(), 4000).unref();
-    startEngine().then(() => {
+    startEngine().catch((e) => console.error('[gate] engine start failed:', e && e.message)).then(() => {
         if (process.platform === 'win32' && process.env.LEDGER_OPEN !== '0') {
             try { spawn('cmd', ['/c', 'start', '', `http://localhost:${settings.port}/`], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); } catch (_) {}
         }
@@ -1412,3 +1450,16 @@ server.listen(settings.port, settings.host, () => {
 const bye = () => { try { writeJsonAtomic(SESSIONS_FILE, [...sessions.entries()]); } catch (_) {} stopEngine(); process.exit(0); };
 ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK'].forEach((sig) => { try { process.on(sig, bye); } catch (_) {} });
 process.on('exit', stopEngine);
+
+// One bad answer from the internet must not take the whole app down. A stray promise error is
+// logged; a real crash restarts DotaTraker through start.bat (exit 75) instead of closing it,
+// unless it crashes right at start (then a restart would only loop).
+process.on('unhandledRejection', (e) => { console.error('[gate] unhandled error:', (e && e.message) || e); });
+process.on('uncaughtException', (e) => {
+    console.error('[gate] crashed:', (e && e.stack) || e);
+    try { writeJsonAtomic(SESSIONS_FILE, [...sessions.entries()]); } catch (_) {}
+    stopEngine();
+    const canRestart = process.env.DOTATRAKER_LOOP === '1' && process.uptime() > 30;
+    if (canRestart) process.env.LEDGER_OPEN = '0';
+    process.exit(canRestart ? 75 : 1);
+});

@@ -18,6 +18,7 @@
     const $ = (id) => document.getElementById(id);
     let msgsEl, bodyEl, inputEl, sendBtn, emptyEl, onlineEl, tipEl, gateEl, inbarEl, legendEl, nickBtn, badgeEl, chatTabBtn;
     let me = null, lastId = 0, firstId = 0, timer = null, seen = {}, atBottom = true, unread = 0, primed = false;
+    let polling = false, clockSkew = 0;   // clockSkew: key server time minus this PC's time
     let hasOlder = true, loadingOlder = false;
     const baseTitle = document.title;
 
@@ -43,8 +44,9 @@
             body: JSON.stringify(payload || {})
         }).then(async (r) => {
             let j = {}; try { j = await r.json(); } catch (_) {}
-            return { status: r.status, body: j };
-        });
+            if (j && Number(j.serverNow) > 0) clockSkew = Number(j.serverNow) - Date.now();
+            return { status: r.status, body: j || {} };
+        }, () => ({ status: 0, body: { code: 'offline' } }));   // network error: same as "no answer", never an unhandled rejection
     }
 
     function badge(tier) {
@@ -119,13 +121,17 @@
     const timeCache = {};
     function messageTime(el) { return timeCache[el.getAttribute('data-id')] || Date.now(); }
 
-    function appendMessages(list) {
+    // fromPoll: only messages that came from the history poll may move lastId forward. A message we
+    // just sent can have a higher id than others' messages the poll has not fetched yet; moving lastId
+    // to it made the next poll ask "after my message" and those messages were never shown.
+    function appendMessages(list, fromPoll) {
         const mySteam = (me && me.steamId) || '';
         let fresh = 0, mentionFresh = false, html = '';
         list.forEach((m) => {
+            if (!m) return;
+            if (fromPoll && m.id > lastId) lastId = m.id;
             if (seen[m.id]) return;
             seen[m.id] = 1; timeCache[m.id] = m.t;
-            if (m.id > lastId) lastId = m.id;
             if (!firstId || m.id < firstId) firstId = m.id;
             if (primed && m.steamId !== mySteam && !chatActive()) { fresh++; if ((me && me.nick) && (m.body || '').toLowerCase().indexOf('@' + me.nick.toLowerCase()) >= 0) mentionFresh = true; }
             html += msgHtml(m);
@@ -133,6 +139,12 @@
         if (!html) return;
         if (emptyEl) emptyEl.style.display = 'none';
         msgsEl.insertAdjacentHTML('beforeend', html);
+        // others' messages that were written just before ours arrive after it: keep the order by id
+        const nodes = [...msgsEl.querySelectorAll('.chat-msg')];
+        const idOf = (n) => Number(n.getAttribute('data-id')) || 0;
+        for (let i = 1; i < nodes.length; i++) {
+            if (idOf(nodes[i]) < idOf(nodes[i - 1])) { nodes.sort((a, b) => idOf(a) - idOf(b)).forEach((n) => msgsEl.appendChild(n)); break; }
+        }
         relayoutDividers();
         if (atBottom) bodyEl.scrollTop = bodyEl.scrollHeight;
         if (fresh > 0) { unread += fresh; updateBadge(); if (mentionFresh) pingMention(); }
@@ -143,7 +155,7 @@
         let html = '';
         const fresh = list.filter((m) => !seen[m.id]);
         if (!fresh.length) return;
-        fresh.forEach((m) => { seen[m.id] = 1; timeCache[m.id] = m.t; if (!firstId || m.id < firstId) firstId = m.id; if (m.id > lastId) lastId = m.id; html += msgHtml(m); });
+        fresh.forEach((m) => { seen[m.id] = 1; timeCache[m.id] = m.t; if (!firstId || m.id < firstId) firstId = m.id; html += msgHtml(m); });
         const prevH = bodyEl.scrollHeight, prevT = bodyEl.scrollTop;
         msgsEl.insertAdjacentHTML('afterbegin', html);
         relayoutDividers();
@@ -166,29 +178,36 @@
     }
 
     async function poll() {
-        const r = await api('history', { after: lastId });
-        if (r.status === 401 && r.body.code === 'unknown') { setGate('Введите ключ на главной, чтобы открыть чат.'); return; }
-        if (r.status === 403 && r.body.code === 'steam') { setGate('Войдите через Steam, чтобы писать в чат. <a href="/_ledger/steam/start">Войти через Steam</a>'); if (emptyEl) emptyEl.textContent = 'Войдите через Steam, чтобы читать чат.'; return; }
-        if (r.status !== 200 || !r.body.ok) return;
-        me = r.body.me || me;
-        if (typeof r.body.online === 'number') setOnline(r.body.online);
-        if (lastId === 0 && typeof r.body.older === 'boolean') hasOlder = r.body.older;
-        if (me && me.banned) { setGate('Вы заблокированы в чате.'); }
-        else if (me && me.mutedUntil && me.mutedUntil > Date.now()) { setGate('Вы в муте до ' + new Date(me.mutedUntil).toLocaleTimeString()); }
-        else setGate('');
-        appendMessages(r.body.messages || []);
-        buildLegend();
+        // one request at a time: a slow key server used to stack up a new poll every 3 s
+        if (polling) return;
+        polling = true;
+        try {
+            const r = await api('history', { after: lastId });
+            if (r.body.code === 'unknown' && (r.status === 401 || r.status === 403)) { setGate('Введите ключ на главной, чтобы открыть чат.'); return; }
+            if (r.status === 403 && r.body.code === 'steam') { setGate('Войдите через Steam, чтобы писать в чат. <a href="/_ledger/steam/start?from=app">Войти через Steam</a>'); if (emptyEl) emptyEl.textContent = 'Войдите через Steam, чтобы читать чат.'; return; }
+            if (r.status !== 200 || !r.body.ok) return;
+            me = r.body.me || me;
+            if (typeof r.body.online === 'number') setOnline(r.body.online);
+            if (lastId === 0 && typeof r.body.older === 'boolean') hasOlder = r.body.older;
+            // mutes end on the key server's clock, not this PC's
+            if (me && me.banned) { setGate('Вы заблокированы в чате.'); }
+            else if (me && me.mutedUntil && me.mutedUntil > Date.now() + clockSkew) { setGate('Вы в муте до ' + new Date(me.mutedUntil - clockSkew).toLocaleTimeString()); }
+            else setGate('');
+            appendMessages(r.body.messages || [], true);
+            buildLegend();
+        } finally { polling = false; }
     }
 
     async function loadOlder() {
         if (loadingOlder || !hasOlder || !firstId) return;
         loadingOlder = true;
-        const r = await api('history', { before: firstId });
-        if (r.status === 200 && r.body.ok) {
-            prependMessages(r.body.messages || []);
-            hasOlder = !!r.body.older;
-        }
-        loadingOlder = false;
+        try {
+            const r = await api('history', { before: firstId });
+            if (r.status === 200 && r.body.ok) {
+                prependMessages(r.body.messages || []);
+                hasOlder = !!r.body.older;
+            }
+        } finally { loadingOlder = false; }
     }
 
     function buildLegend() {
@@ -201,7 +220,7 @@
         if (!text) return;
         inputEl.value = '';
         const r = await api('send', { body: text });
-        if (r.status === 200 && r.body.ok) { atBottom = true; appendMessages([r.body.message]); }
+        if (r.status === 200 && r.body.ok) { atBottom = true; appendMessages([r.body.message], false); }
         else if (r.body && r.body.code === 'cooldown') { toast('Слишком часто, подожди секунду'); inputEl.value = text; }
         else if (r.body && r.body.code === 'muted') { toast('Вы в муте'); }
         else if (r.body && r.body.code === 'banned') { setGate('Вы заблокированы в чате.'); }

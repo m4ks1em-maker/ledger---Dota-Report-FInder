@@ -44,7 +44,7 @@
     if (toolsTabBtn) toolsTabBtn.addEventListener('click', () => initDraft());
 
     /* ========================= DRAFT HELPER ========================= */
-    let draftInited = false, enemies = [], draftBusy = false;
+    let draftInited = false, enemies = [], draftBusy = false, draftAgain = false;
     async function initDraft() {
         if (draftInited) return; draftInited = true;
         try { await ensureHeroes(); $('draft-q').disabled = false; }
@@ -101,7 +101,8 @@
     async function runDraft() {
         const out = $('draft-out');
         if (!enemies.length) { out.textContent = ''; return; }
-        if (draftBusy) return; draftBusy = true;
+        // a hero added while the last request runs: run again afterwards instead of showing the old picks
+        if (draftBusy) { draftAgain = true; return; } draftBusy = true; draftAgain = false;
         out.innerHTML = '<div class="tool-loading"><i></i><i></i><i></i></div>';
         try {
             const agg = {};
@@ -146,7 +147,7 @@
             out.appendChild(foot);
         } catch (e) {
             out.innerHTML = '<p class="inline-error">' + esc(e.message === 'signin' ? '' : T('Cannot reach OpenDota. Check your internet connection.')) + '</p>';
-        } finally { draftBusy = false; }
+        } finally { draftBusy = false; if (draftAgain) { draftAgain = false; runDraft(); } }
     }
 
     /* ========================= PERSONAL COACH ========================= */

@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.23.1",
+  "version": "2.23.2",
   "engineRev": "5",
-  "releaseNotes": "Report counting fixed: duplicate reports the replay engine saw twice are merged, reports from an unknown player are no longer collapsed into one, impossible self-reports are dropped, and a report without a timestamp no longer breaks the whole replay. The verdict, the player picker, the report list and the highlights now show the same number. A clean replay now shows \"Clean match\" instead of the number from the previous replay. Reports the replay can't pin down exactly are marked (with the likely player and alternatives on hover). The report list opens on Incoming.",
-  "releaseNotesRu": "Починен подсчёт репортов: дубли (когда движок видел один репорт дважды) склеиваются, репорты от неизвестного игрока больше не схлопываются в один, невозможные «репорты на себя» отбрасываются, а репорт без времени больше не ломает весь реплей. Вердикт, выбор игрока, список и хайлайты теперь показывают одно и то же число. Чистый реплей показывает «Чистый матч», а не цифру от прошлого реплея. Неточные репорты помечены (вероятный игрок и варианты — при наведении). Список репортов открывается на «Входящих».",
+  "releaseNotes": "Stability and timing fixes: the app no longer hangs when the replay engine crashes mid-answer (analysis, downloads, auto-sync), one stuck replay can no longer freeze the whole analysis, days left and key expiry follow the key server's clock instead of the PC clock, chat no longer skips messages written right before yours and no longer reloads the page in a loop, Russian toxic messages are detected again, times before 0:00 sort correctly, the Steam status check no longer floods the engine, and a crash restarts DotaTraker instead of closing it.",
+  "releaseNotesRu": "Стабильность и тайминги: приложение больше не зависает, если движок падает посреди ответа (анализ, загрузки, автосинк), один зависший реплей больше не стопорит весь анализ, дни ключа и срок считаются по часам сервера, а не ПК, чат больше не теряет сообщения, написанные прямо перед твоим, и не перезагружает страницу по кругу, русский токсик снова подсвечивается, время до 0:00 сортируется правильно, проверка Steam больше не долбит движок, а при сбое DotaTraker перезапускается сам, а не закрывается.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

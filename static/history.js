@@ -131,12 +131,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const turboParam = turboOnly ? '&turboOnly=true' : '';
         fetchWithRetry(`/api/history?steamId=${encodeURIComponent(steamId)}&limit=${limit}${turboParam}`, { timeout: 120000 }, 2, 1000)
             .then(res => res.json())
-            .then(matches => {
-                renderHistory(matches);
-                // Check existence after rendering, then auto-download
-                checkReplayExistence(matches).then(existingIds => {
-                    autoDownloadMatches(matches, existingIds);
-                });
+            .then(async matches => {
+                // the list must be on the page before its rows are marked and downloads start:
+                // both used to run at the same time, so rows showed "Download" while downloading
+                await renderHistory(matches);
+                if (!matches || !matches.length) return;
+                const existingIds = await checkReplayExistence(matches).catch(() => null);
+                if (!existingIds) return;   // could not tell what is already here: do not download blindly
+                await autoDownloadMatches(matches, existingIds);
             })
             .catch(err => {
                 showError(historyResults, err.message, () => fetchHistoryBtn.click());
@@ -151,12 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const profileName = getSelectedProfileName();
         const url = '/api/replays?t=' + Date.now() + (profileName ? '&profile=' + encodeURIComponent(profileName) : '');
-        fetchWithRetry(url, {}, 2, 1000)
+        return fetchWithRetry(url, {}, 2, 1000)
             .then(res => res.json())
-            .then(replays => {
-                const safeReplays = replays || [];
-                const existingIds = new Set(safeReplays.map(r => r.fileName.replace('.dem', '')));
-                
+            .then(() => {
                 historyResults.innerHTML = '<ul>' + matches.map(m => {
                     return `
                         <li class="history-item" id="history-match-${m.id}">
