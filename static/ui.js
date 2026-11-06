@@ -308,6 +308,35 @@
         setTimeout(tick, 1200);
     }
 
+    /* ---------- liquid glass backdrop: the hero of the match you look at, blurred behind the page ---------- */
+    const backdrop = (() => {
+        let el = null, cur = null;
+        const ensure = () => {
+            if (el) return el;
+            el = document.createElement('div'); el.className = 'lg-bg'; el.setAttribute('aria-hidden', 'true');
+            document.body.insertBefore(el, document.body.firstChild);
+            return el;
+        };
+        function set(npc, win) {
+            const root = document.documentElement;
+            root.classList.toggle('lg-win', win === true);
+            root.classList.toggle('lg-loss', win === false);
+            if (!npc || npc === cur) return;
+            cur = npc;
+            const box = ensure();
+            const img = new Image(); img.alt = ''; img.decoding = 'async';
+            img.onload = () => {
+                if (cur !== npc) return;
+                box.querySelectorAll('img').forEach((o) => { o.classList.remove('on'); setTimeout(() => o.remove(), 1300); });
+                box.appendChild(img);
+                requestAnimationFrame(() => requestAnimationFrame(() => img.classList.add('on')));
+            };
+            img.src = '/_ledger/od/heroart?k=png&h=' + encodeURIComponent(npc);
+        }
+        return { set };
+    })();
+    window.LedgerBackdrop = backdrop;
+
     window.LedgerUI = { esc, toast, confirm: confirmBox, glider, countTo, watchNumbers, canvasTheme, reduced, updateBar };
 
     function start() {

@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.26.0",
+  "version": "2.27.0",
   "engineRev": "6",
-  "releaseNotes": "New design pass. Home: your last match with your hero's art, result, K/D/A and reports on you, plus one strip with your numbers. Replays: every analysed replay shows your hero, win or loss, K/D/A, length and whether you were reported. One gold HUD style across Bot, Tools and match tabs, compact section titles, labels on the menu icons, dates in your language, the 'matches analysed' bar floats instead of pushing the page down, and the phone layout no longer breaks.",
-  "releaseNotesRu": "Обновление дизайна. Главная: твой последний матч с артом героя, итогом, K/D/A и репортами на тебя, плюс одна полоса с твоими цифрами. Реплеи: у каждого разобранного реплея видно твоего героя, победу или поражение, K/D/A, длительность и были ли репорты на тебя. Единый золотой HUD во вкладках Бот, Инструменты и в матче, компактные заголовки, подписи у иконок меню, даты по-русски, плашка «матчи проанализированы» всплывает снизу и не сдвигает страницу, на телефоне больше ничего не разъезжается.",
+  "releaseNotes": "New look: liquid glass. Frosted see-through cards over a blurred backdrop of your hero (tinted green after a win, red after a loss), pill-shaped menu and buttons, white primary buttons, cleaner type without all-caps. The light theme stays as it was. Also: the match flow chart no longer squeezes into a third of its box when the match was analysed on another tab.",
+  "releaseNotesRu": "Новый вид: liquid glass. Полупрозрачные стеклянные карточки поверх размытого арта твоего героя (зелёный оттенок после победы, красный после поражения), меню и кнопки-«таблетки», белые главные кнопки, спокойные заголовки без капса. Светлая тема осталась прежней. Ещё: график «Ход матча» больше не сжимается в треть блока, если матч разобрали на другой вкладке.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

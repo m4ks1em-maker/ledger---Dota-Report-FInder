@@ -2259,3 +2259,160 @@ html[data-theme="light"] .moments-switch button.on { background: #eef2f9; box-sh
 }
 @media (max-width: 760px) { html, body { overflow-x: clip; } }
 @media (max-width: 900px) { .browse-grid { grid-template-columns: minmax(0, 1fr); } .browse-grid > * { min-width: 0; } }
+
+/* ======================================================================================
+   LIQUID GLASS (2.27) — the dark theme. Light theme keeps its own look.
+   Frosted translucent cards over a blurred backdrop of your hero, pill controls,
+   Inter Tight everywhere, no HUD brackets or scanlines.
+   ====================================================================================== */
+:root:not([data-theme="light"]) {
+    --bg: #07090d; --bg-2: #10151c;
+    --glass: rgba(255, 255, 255, 0.075); --glass-strong: rgba(30, 36, 46, 0.86); --glass-pop: rgba(18, 22, 30, 0.94);
+    --glass-soft: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.13); --glass-edge: rgba(255, 255, 255, 0.3);
+    --hair: rgba(255, 255, 255, 0.08); --field: rgba(0, 0, 0, 0.24); --field-border: rgba(255, 255, 255, 0.1); --hover: rgba(255, 255, 255, 0.07);
+    --text-primary: #f4f7fb; --text-secondary: rgba(232, 240, 250, 0.7); --text-tertiary: rgba(222, 232, 245, 0.46);
+    --accent: #ffd77a; --accent-strong: #ffe6a6; --accent-ink: #14100a; --accent-soft: rgba(255, 215, 122, 0.13); --accent-line: rgba(255, 255, 255, 0.3);
+    --radiant: #4ff0b4; --dire: #ff6b7d; --aegis: #ffd77a;
+    --radiant-soft: rgba(79, 240, 180, 0.16); --dire-soft: rgba(255, 107, 125, 0.17); --aegis-soft: rgba(255, 215, 122, 0.15);
+    --cv-bg: transparent; --cv-row: rgba(255, 255, 255, 0.035); --cv-line: rgba(255, 255, 255, 0.12); --cv-grid: rgba(255, 255, 255, 0.06); --cv-chip: rgba(255, 255, 255, 0.1); --cv-halo: #0b0f15;
+    --font-display: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-num: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --r-xl: 30px; --r-lg: 26px; --r-md: 18px; --r-sm: 12px;
+    --lg-mat: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04) 45%, rgba(255, 255, 255, 0.065));
+    --lg-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), inset 0 -1px 0 rgba(255, 255, 255, 0.05), 0 30px 60px -32px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.22);
+    --lg-blur: blur(34px) saturate(180%);
+    --lg-pill: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+    --lg-pill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 8px 20px -12px rgba(0, 0, 0, 0.7);
+    --lg-on: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.11));
+    --lg-on-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 12px -6px rgba(0, 0, 0, 0.6);
+    --lg-track: rgba(0, 0, 0, 0.24);
+    --lg-track-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+:root:not([data-theme="light"]) body { background: var(--bg); }
+:root:not([data-theme="light"]) body::before { display: none; }
+:root:not([data-theme="light"]) .aurora .a1 { background: radial-gradient(circle at 60% 50%, rgba(80, 120, 255, 0.2), transparent 60%); }
+:root:not([data-theme="light"]) .aurora .a2 { background: radial-gradient(circle at 60% 60%, rgba(255, 90, 120, 0.14), transparent 62%); }
+:root:not([data-theme="light"]) .aurora .a3 { background: radial-gradient(circle, rgba(170, 120, 255, 0.12), transparent 64%); }
+
+/* backdrop: the hero of your last match, huge and blurred, tinted by the result */
+.lg-bg { display: none; }
+:root:not([data-theme="light"]) .lg-bg { display: block; position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+:root:not([data-theme="light"]) .lg-bg img { position: absolute; width: 118vw; height: 118vw; left: -4vw; top: -40vw; object-fit: cover; filter: blur(72px) saturate(1.5) brightness(0.72); opacity: 0; transition: opacity 1.2s var(--ease); }
+:root:not([data-theme="light"]) .lg-bg img.on { opacity: 0.85; }
+:root:not([data-theme="light"]) .lg-bg::after { content: ""; position: absolute; inset: 0; background:
+    radial-gradient(60% 50% at 85% 8%, var(--lg-tint, rgba(120, 140, 255, 0.18)), transparent 70%),
+    radial-gradient(50% 60% at 5% 85%, rgba(60, 110, 255, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(7, 9, 13, 0.15), rgba(7, 9, 13, 0.74) 55%, #07090d); }
+:root:not([data-theme="light"]).lg-loss { --lg-tint: rgba(255, 90, 110, 0.26); }
+:root:not([data-theme="light"]).lg-win { --lg-tint: rgba(60, 230, 170, 0.22); }
+
+/* the glass material */
+:root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) .tile, :root:not([data-theme="light"]) .setup-panel, :root:not([data-theme="light"]) .conduct-scorecard-banner, :root:not([data-theme="light"]) .account-pop, :root:not([data-theme="light"]) .dialog, :root:not([data-theme="light"]) .toast, :root:not([data-theme="light"]) .match-verdict, :root:not([data-theme="light"]) .matchflow, :root:not([data-theme="light"]) #matchflow {
+    background: var(--lg-mat); border: 1px solid rgba(255, 255, 255, 0.1); border-top-color: rgba(255, 255, 255, 0.26);
+    border-radius: var(--r-xl); box-shadow: var(--lg-shadow);
+    backdrop-filter: var(--lg-blur); -webkit-backdrop-filter: var(--lg-blur);
+}
+:root:not([data-theme="light"]) .card::before, :root:not([data-theme="light"]) .tile::before { background: radial-gradient(520px circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.07), transparent 45%); }
+:root:not([data-theme="light"]) .main-card::after, :root:not([data-theme="light"]) .match-verdict::after, :root:not([data-theme="light"]) #timeline-graph-container::after, :root:not([data-theme="light"]) .matchmap-wrap::after { display: none; }
+:root:not([data-theme="light"]) .card .card, :root:not([data-theme="light"]) .card .tile { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255, 255, 255, 0.045); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.07); border-radius: var(--r-lg); }
+
+/* type */
+:root:not([data-theme="light"]) .card-header h2, :root:not([data-theme="light"]) .main-card > .card-header h2, :root:not([data-theme="light"]) .card:not(.main-card) > .card-header h2 { text-transform: none; letter-spacing: -0.02em; font: 680 clamp(1.25rem, 1.7vw, 1.55rem)/1.15 var(--font-display); }
+:root:not([data-theme="light"]) .main-card > .card-header h2::before { display: none; }
+:root:not([data-theme="light"]) .t-eyebrow { text-transform: none; letter-spacing: 0; font: 600 0.84rem var(--font-ui); color: var(--text-secondary); }
+:root:not([data-theme="light"]) .t-eyebrow::before { display: none; }
+:root:not([data-theme="light"]) .t-lookup h2 { font-weight: 720; letter-spacing: -0.035em; }
+:root:not([data-theme="light"]) .kpi, :root:not([data-theme="light"]) .stat-value, :root:not([data-theme="light"]) .hs-cell .kpi { font-weight: 680; letter-spacing: -0.035em; }
+:root:not([data-theme="light"]) .rep-head-t, :root:not([data-theme="light"]) .pt-head, :root:not([data-theme="light"]) .graph-title { text-transform: none; letter-spacing: -0.01em; font: 650 1rem var(--font-ui); color: var(--text-primary); }
+:root:not([data-theme="light"]) .brand-name { text-shadow: none; font-weight: 700; letter-spacing: -0.01em; }
+
+/* header: floating pills over a soft fade */
+:root:not([data-theme="light"]) .main-header { background: linear-gradient(180deg, rgba(7, 9, 13, 0.82), rgba(7, 9, 13, 0)); border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+:root:not([data-theme="light"]) .workflow-tabs { padding: 5px; gap: 2px; border-radius: 999px; background: var(--lg-mat); box-shadow: var(--lg-shadow); border: 1px solid rgba(255, 255, 255, 0.1); border-top-color: rgba(255, 255, 255, 0.24); backdrop-filter: var(--lg-blur); -webkit-backdrop-filter: var(--lg-blur); }
+:root:not([data-theme="light"]) .workflow-tab { height: 38px; padding: 0 14px; border-radius: 999px; clip-path: none; text-transform: none; letter-spacing: 0; font: 600 0.86rem var(--font-ui); color: var(--text-secondary); border: 0; }
+:root:not([data-theme="light"]) .workflow-tab.active { background: var(--lg-on); box-shadow: var(--lg-on-shadow); color: #fff; border: 0; text-shadow: none; }
+:root:not([data-theme="light"]) .workflow-tab.active .tab-icon svg { stroke: #fff; }
+:root:not([data-theme="light"]) .nav-tip { clip-path: none; border-radius: 999px; text-transform: none; letter-spacing: 0; font: 600 0.78rem var(--font-ui); color: #fff; background: rgba(22, 27, 36, 0.92); border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.8); backdrop-filter: blur(20px); }
+:root:not([data-theme="light"]) .lx-switch, :root:not([data-theme="light"]) .status-badge, :root:not([data-theme="light"]) .account-chip, :root:not([data-theme="light"]) .icon-btn { background: var(--lg-mat); border: 1px solid rgba(255, 255, 255, 0.1); border-top-color: rgba(255, 255, 255, 0.24); box-shadow: var(--lg-shadow); backdrop-filter: var(--lg-blur); -webkit-backdrop-filter: var(--lg-blur); }
+:root:not([data-theme="light"]) .lx-switch button.on { background: var(--lg-on); box-shadow: var(--lg-on-shadow); }
+:root:not([data-theme="light"]) .status-badge.connected { box-shadow: var(--lg-shadow), 0 0 18px -4px rgba(79, 240, 180, 0.45); }
+
+/* buttons: white primary pill, glass pills for the rest */
+:root:not([data-theme="light"]) .btn { border-radius: 999px; clip-path: none; text-transform: none; letter-spacing: 0; font-weight: 650; }
+:root:not([data-theme="light"]) .primary-btn { background: linear-gradient(180deg, #ffffff, #dce7f5); color: #0b1220; border: 0; box-shadow: inset 0 1px 0 #fff, 0 10px 26px -12px rgba(170, 210, 255, 0.75); }
+:root:not([data-theme="light"]) .primary-btn:hover:not(:disabled) { filter: brightness(1.04); transform: translateY(-1px); }
+:root:not([data-theme="light"]) .secondary-btn, :root:not([data-theme="light"]) .small-btn, :root:not([data-theme="light"]) .lk-form .btn:not(.primary-btn), :root:not([data-theme="light"]) .done-bar button:not(.x), :root:not([data-theme="light"]) .bot-channel { clip-path: none; text-transform: none; letter-spacing: 0; color: var(--text-primary); background: var(--lg-pill); border: 0; box-shadow: var(--lg-pill-shadow); }
+:root:not([data-theme="light"]) .secondary-btn:hover:not(:disabled), :root:not([data-theme="light"]) .small-btn:hover:not(:disabled) { background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.1)); }
+:root:not([data-theme="light"]) .danger-btn { border-radius: 999px; clip-path: none; text-transform: none; background: rgba(255, 107, 125, 0.12); border: 0; box-shadow: inset 0 0 0 1px rgba(255, 107, 125, 0.4); }
+:root:not([data-theme="light"]) .bot-open, :root:not([data-theme="light"]) .bot-foot .large-btn { clip-path: none !important; border-radius: 999px !important; text-transform: none; letter-spacing: 0; background: linear-gradient(180deg, #ffffff, #dce7f5) !important; color: #0b1220 !important; box-shadow: inset 0 1px 0 #fff, 0 12px 28px -12px rgba(170, 210, 255, 0.75) !important; }
+:root:not([data-theme="light"]) .bot-open svg { fill: #0b1220; }
+:root:not([data-theme="light"]) .bs-n { clip-path: none; border-radius: 12px; background: var(--lg-on); color: #fff; box-shadow: var(--lg-on-shadow); }
+:root:not([data-theme="light"]) .match-meta-id, :root:not([data-theme="light"]) .match-meta-id button, :root:not([data-theme="light"]) .match-meta-id .mm-copy { border-radius: 999px; }
+
+/* fields */
+:root:not([data-theme="light"]) input[type="text"], :root:not([data-theme="light"]) input[type="password"], :root:not([data-theme="light"]) input[type="number"], :root:not([data-theme="light"]) input[type="search"], :root:not([data-theme="light"]) select, :root:not([data-theme="light"]) textarea, :root:not([data-theme="light"]) .replay-search input {
+    background: rgba(0, 0, 0, 0.26); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; color: var(--text-primary);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+:root:not([data-theme="light"]) input:focus, :root:not([data-theme="light"]) select:focus, :root:not([data-theme="light"]) textarea:focus { border-color: rgba(255, 255, 255, 0.32); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 4px rgba(255, 255, 255, 0.08); outline: none; }
+:root:not([data-theme="light"]) .lk-form input, :root:not([data-theme="light"]) .lk-form .btn { border-radius: 999px; }
+
+/* segmented controls: dark track, glass capsule */
+:root:not([data-theme="light"]) .graph-view-selector, :root:not([data-theme="light"]) .moments-switch, :root:not([data-theme="light"]) .tools-switch, :root:not([data-theme="light"]) .mf-seg { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--lg-track); box-shadow: var(--lg-track-shadow); border: 0; }
+:root:not([data-theme="light"]) .graph-view-tab, :root:not([data-theme="light"]) .moments-switch button, :root:not([data-theme="light"]) .tools-switch button, :root:not([data-theme="light"]) .mf-seg button { height: 34px; padding: 0 15px; border: 0 !important; border-radius: 999px; background: transparent; text-transform: none; letter-spacing: 0; font: 600 0.82rem var(--font-ui); color: var(--text-secondary); box-shadow: none; }
+:root:not([data-theme="light"]) .graph-view-tab.active, :root:not([data-theme="light"]) .moments-switch button.on, :root:not([data-theme="light"]) .tools-switch button.on, :root:not([data-theme="light"]) .mf-seg button.on { color: #fff; background: var(--lg-on); box-shadow: var(--lg-on-shadow); text-shadow: none; }
+:root:not([data-theme="light"]) .tools-switch { max-width: 560px; width: auto; }
+:root:not([data-theme="light"]) .mf-collapse, :root:not([data-theme="light"]) .mm-speed { border-radius: 999px; border: 0; background: var(--lg-pill); box-shadow: var(--lg-pill-shadow); }
+
+/* chips and tags */
+:root:not([data-theme="light"]) .rep-lvl, :root:not([data-theme="light"]) .rp-tag, :root:not([data-theme="light"]) .tl-wl, :root:not([data-theme="light"]) .lk-wl, :root:not([data-theme="light"]) .rep-tag, :root:not([data-theme="light"]) .ev-chip, :root:not([data-theme="light"]) .tag { border-radius: 999px; }
+:root:not([data-theme="light"]) .hl-chip, :root:not([data-theme="light"]) .cs-chip { border-radius: 18px; background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+:root:not([data-theme="light"]) .rep-why > span { border-radius: 999px; background: rgba(0, 0, 0, 0.22); border-color: rgba(255, 255, 255, 0.08); }
+:root:not([data-theme="light"]) .rep-note { border-radius: 20px; background: rgba(0, 0, 0, 0.18); border-color: rgba(255, 255, 255, 0.07); }
+:root:not([data-theme="light"]) .rep-head { background: transparent; }
+
+/* lists */
+:root:not([data-theme="light"]) .replay-list, :root:not([data-theme="light"]) .lk-rows { border-radius: 22px; background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.07); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35); }
+:root:not([data-theme="light"]) .replay-item:has(input:checked) { background: rgba(255, 255, 255, 0.08); }
+:root:not([data-theme="light"]) .rp-hero { border-radius: 12px; }
+:root:not([data-theme="light"]) .t-upload .dropzone { border-color: rgba(255, 255, 255, 0.16); border-radius: 22px; }
+:root:not([data-theme="light"]) .t-upload .dropzone:hover, :root:not([data-theme="light"]) .t-upload .dropzone.over { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.35); }
+:root:not([data-theme="light"]) .dropzone > svg, :root:not([data-theme="light"]) .t-trust > svg { border-radius: 16px; }
+:root:not([data-theme="light"]) .t-strip { padding: 0; }
+:root:not([data-theme="light"]) .hs-cell::after { background: rgba(255, 255, 255, 0.6); }
+:root:not([data-theme="light"]) .tg-link { border-radius: 18px; background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.08); }
+
+/* match: verdict + numbers */
+:root:not([data-theme="light"]) .match-verdict { border-radius: var(--r-xl); overflow: hidden; }
+:root:not([data-theme="light"]) .match-verdict .mv-title, :root:not([data-theme="light"]) #mv-title { letter-spacing: -0.035em; font-weight: 720; }
+:root:not([data-theme="light"]) .mv-hero-tag { border-radius: 999px; background: var(--lg-mat); box-shadow: var(--lg-pill-shadow); }
+
+/* toast + mobile dock */
+:root:not([data-theme="light"]) #ledger-done.done-bar:not(.hidden) { border-radius: 999px; background: rgba(20, 25, 34, 0.86); border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 24px 50px -18px rgba(0, 0, 0, 0.8); backdrop-filter: var(--lg-blur); -webkit-backdrop-filter: var(--lg-blur); padding-left: 22px; }
+@media (max-width: 760px) {
+    :root:not([data-theme="light"]) .main-header .workflow-tabs { border-radius: 999px; background: rgba(22, 27, 36, 0.82); border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 18px 40px -14px rgba(0, 0, 0, 0.85); }
+    :root:not([data-theme="light"]) .main-header .workflow-tab { border-radius: 999px; }
+    :root:not([data-theme="light"]) #ledger-done.done-bar:not(.hidden) { border-radius: 26px; }
+}
+
+/* glass: sentence-case labels, white titles, glass number tiles */
+:root:not([data-theme="light"]) #results-section > .card-header h2 { font: 600 0.88rem/1 var(--font-ui); letter-spacing: 0; text-transform: none; color: var(--text-secondary); }
+:root:not([data-theme="light"]) #results-section > .card-header h2::before { display: none; }
+:root:not([data-theme="light"]) .mv-eyebrow, :root:not([data-theme="light"]) .ms-label, :root:not([data-theme="light"]) .mf-title, :root:not([data-theme="light"]) .mf-leg, :root:not([data-theme="light"]) .hl-chip small, :root:not([data-theme="light"]) .cs-chip small, :root:not([data-theme="light"]) .mv-num span, :root:not([data-theme="light"]) .pt-head, :root:not([data-theme="light"]) .pt-table th, :root:not([data-theme="light"]) .pt-side td, :root:not([data-theme="light"]) .chat-day span, :root:not([data-theme="light"]) .pf-card h3, :root:not([data-theme="light"]) .pf-ach-head h3, :root:not([data-theme="light"]) .bot-eyebrow, :root:not([data-theme="light"]) .rp-sub b, :root:not([data-theme="light"]) .rp-tag, :root:not([data-theme="light"]) .tl-wl, :root:not([data-theme="light"]) .tl-who, :root:not([data-theme="light"]) .rep-lvl, :root:not([data-theme="light"]) .mv-hero-tag .res, :root:not([data-theme="light"]) .pf-tier, :root:not([data-theme="light"]) .lk-wl, :root:not([data-theme="light"]) .ev-chip { text-transform: none; letter-spacing: 0; }
+:root:not([data-theme="light"]) .mv-eyebrow, :root:not([data-theme="light"]) .ms-label, :root:not([data-theme="light"]) .mf-title { font: 600 0.84rem var(--font-ui); color: var(--text-secondary); }
+:root:not([data-theme="light"]) .mf-title { font-size: 1rem; color: var(--text-primary); }
+:root:not([data-theme="light"]) .ms-label svg { stroke: var(--text-secondary); }
+:root:not([data-theme="light"]) .hl-chip small, :root:not([data-theme="light"]) .cs-chip small { font: 600 0.74rem var(--font-ui); }
+:root:not([data-theme="light"]) .rep-lvl, :root:not([data-theme="light"]) .rp-tag, :root:not([data-theme="light"]) .tl-wl, :root:not([data-theme="light"]) .mv-hero-tag .res, :root:not([data-theme="light"]) .lk-wl { font-weight: 700; font-size: 0.74rem; }
+:root:not([data-theme="light"]) .mv-num span { font: 600 0.72rem var(--font-ui); }
+:root:not([data-theme="light"]) .match-verdict.mv-calm .mv-title, :root:not([data-theme="light"]) .mv-title { color: #fff; }
+:root:not([data-theme="light"]) .match-verdict.mv-toxic .mv-title { color: #ffb4bf; }
+:root:not([data-theme="light"]) .match-verdict::before { opacity: 0.18; }
+:root:not([data-theme="light"]) .t-last .tl-hero, :root:not([data-theme="light"]) .bot-name { text-transform: none; letter-spacing: -0.03em; }
+:root:not([data-theme="light"]) .tl-hero { font-weight: 720; }
+:root:not([data-theme="light"]) .match-stats { background: transparent; border: 0; gap: 12px; border-radius: 0; overflow: visible; }
+:root:not([data-theme="light"]) .ms-tile { background: var(--lg-mat); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); border-top-color: rgba(255, 255, 255, 0.24); box-shadow: var(--lg-shadow); }
+:root:not([data-theme="light"]) .ms-tile b { font-weight: 700; letter-spacing: -0.035em; }
+:root:not([data-theme="light"]) .done-bar span::before { box-shadow: 0 0 0 4px rgba(79, 240, 180, 0.18); }
+:root:not([data-theme="light"]) .tools-switch button { white-space: nowrap; flex: 0 0 auto; padding: 0 18px; }
+@media (max-width: 760px) { :root:not([data-theme="light"]) .tools-switch { max-width: 100%; overflow-x: auto; scrollbar-width: none; } }

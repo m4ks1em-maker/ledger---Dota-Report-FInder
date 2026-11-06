@@ -633,6 +633,7 @@
             box.querySelector('.tl-all').addEventListener('click', () => goTab((window.ledgerMatches || []).length ? 'results' : 'stats'));
             const img = box.querySelector('.tl-art img');
             if (img) img.addEventListener('load', () => box.classList.add('art-on'));
+            if (info && window.LedgerBackdrop && !(window.ledgerMatches || []).length) window.LedgerBackdrop.set(info.npc, won);
         }
         // saved players
         function saved() {
@@ -1629,6 +1630,7 @@
         box.classList.toggle('mv-win', win === true);
         box.classList.toggle('mv-loss', win === false);
         setArt(info ? info.npc : null);
+        if (info && window.LedgerBackdrop) window.LedgerBackdrop.set(info.npc, win);
         nameEl.textContent = info ? info.name : '';
         if (!info) { tag.classList.add('hidden'); return; }
         tag.textContent = '';
