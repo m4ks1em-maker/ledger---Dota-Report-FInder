@@ -1816,6 +1816,17 @@
         drawMatchflow();
     }
     function mfHide() { if (mfBox) mfBox.classList.add('hidden'); mfData = null; }
+    // the match is often analysed while another tab is open: the chart was then drawn 320px wide.
+    // Redraw whenever its box gets its real width (tab shown, window resized).
+    if (mfCanvas && window.ResizeObserver) {
+        let lastW = 0, raf = 0;
+        new ResizeObserver((entries) => {
+            const w = Math.round(entries[0].contentRect.width);
+            if (!w || w === lastW) return;
+            lastW = w;
+            cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (mfData) drawMatchflow(); });
+        }).observe(mfCanvas.parentElement);
+    }
     if (mfRanges) mfRanges.addEventListener('click', (e) => {
         const b = e.target.closest('button[data-r]'); if (!b) return;
         mfRange = b.dataset.r; mfRanges.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawMatchflow();
