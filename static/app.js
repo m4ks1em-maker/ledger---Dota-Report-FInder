@@ -333,6 +333,7 @@ function ledgerWhyText(w) {
         case 'died': return 'died ' + n + ' s before';
         case 'said_reported': return 'said they reported: ' + q(w.Text);
         case 'said_report': return 'wrote ' + q(w.Text);
+        case 'said_hidden': return 'wrote about it in chat';
         case 'flaming': return 'was flaming in chat';
         case 'asked': return 'someone asked to report';
         case 'flame_before': return 'flame in chat just before';
@@ -2340,6 +2341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allTotalTeamReports = allTotalEnemyReports = allTotalConfirmedTeamReports = allTotalConfirmedEnemyReports = 0;
         allTotalUnconfirmedTeamReports = allTotalUnconfirmedEnemyReports = 0;
         const failures = [];
+        let trialStop = null;
 
         let totalTeamReports = 0;
         let totalEnemyReports = 0;
@@ -2375,6 +2377,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                 });
 
+                if (res.status === 402) {
+                    // free trial: the replays for today are used up; stop here and offer a key
+                    const j = await res.json().catch(() => ({}));
+                    trialStop = j.trial || { limit: 2, left: 0 };
+                    break;
+                }
                 if (!res.ok) throw new Error(await res.text());
 
                 const resultText = await res.text();
@@ -2416,8 +2424,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     players: result.Players || [],
                     events: result.Events || [],
                     chat: result.Chat || [],
-                    wards: result.Wards || []
+                    wards: result.Wards || [],
+                    trial: result.Trial || null
                 });
+                if (result.Trial && window.LedgerTrial) window.LedgerTrial.note(result.Trial);
 
                 if (result.Reports) {
                     result.Reports.forEach(report => {
@@ -2454,6 +2464,7 @@ document.addEventListener('DOMContentLoaded', () => {
             progressBar.style.width = `${(processedCount / selectedIds.length) * 100}%`;
         }
 
+        if (trialStop && window.LedgerTrial) window.LedgerTrial.limit(trialStop, selectedIds.length - processedCount);
         if (failures.length) {
             LedgerUI.toast(failures.length === selectedIds.length
                 ? 'Could not read the selected replay' + (failures.length > 1 ? 's' : '') + '. ' + failures[0]
@@ -3094,6 +3105,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Clean list view of reports (replaces the minute-by-minute canvas chart).
     // reports: sure + likely; possible: behaviour-only guesses, shown apart and never counted.
+    const LOCK_SVG = '<svg class="lock-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.6"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>';
+    function trialBuyUrl() { return 'https://t.me/' + encodeURIComponent((window.LedgerTrial && window.LedgerTrial.telegram()) || 'm4ks1em'); }
+    function trialHiddenText(n) {
+        if (window.LedgerI18n && window.LedgerI18n.lang === 'ru') return 'Скрыто: кто кинул ' + n + ' ' + window.LedgerI18n.plural(n, 'репорт', 'репорта', 'репортов');
+        return n === 1 ? 'Who sent 1 report is hidden' : 'Who sent ' + n + ' reports is hidden';
+    }
+    function trialLockCard(title, text) {
+        return '<div class="trial-lock"><span class="tl-ic">' + LOCK_SVG + '</span><b>' + escTL(tr(title)) + '</b><p>' + escTL(tr(text)) + '</p>' +
+            '<a class="rt-cta" href="' + escTL(trialBuyUrl()) + '" target="_blank" rel="noopener noreferrer">' + escTL(tr('Get a key')) + '</a></div>';
+    }
+
     function renderReportTimelineList(reports, dir, possible, md) {
         const C = timelineGraphContainer;
         const outgoing = dir === 'outgoing';
@@ -3109,6 +3131,16 @@ document.addEventListener('DOMContentLoaded', () => {
         head.innerHTML = '<span class="rep-head-t">' + escTL(tr(outgoing ? 'Reports the player made' : 'Reports on the player')) + '</span>' +
             '<span class="rep-head-c">' + rows.length + '</span>';
         C.appendChild(head);
+
+        const lockedN = rows.concat(poss).filter(r => r.Locked).length;
+        if (!outgoing && lockedN && md && md.trial) {
+            const tb = document.createElement('div');
+            tb.className = 'rep-trial';
+            tb.innerHTML = '<span class="rt-ic">' + LOCK_SVG + '</span>' +
+                '<span class="rt-txt"><b>' + escTL(trialHiddenText(lockedN)) + '</b><small>' + escTL(tr('Free trial: you see when and from which team, a key shows who.')) + '</small></span>' +
+                '<a class="rt-cta" href="' + escTL(trialBuyUrl()) + '" target="_blank" rel="noopener noreferrer">' + escTL(tr('Get a key')) + '</a>';
+            C.appendChild(tb);
+        }
 
         if (ours) {
             const note = document.createElement('div');
@@ -3137,10 +3169,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 primary = tlWho(r);
                 hero = (r.Hero && String(r.Hero).toLowerCase() !== 'unknown') ? r.Hero : '';
                 target = r.TargetName || r.TargetHero || '';
-                pl = iconPlayer(r, r); // reporter
+                pl = r.Locked ? null : iconPlayer(r, r); // reporter
             }
-            const iconUrl = getHeroIconUrl(hero || r.TargetHero || r.Hero);
-            const avInner = escTL((primary || '?').trim().charAt(0).toUpperCase())
+            const locked = !!r.Locked && !outgoing;
+            const iconUrl = locked ? null : getHeroIconUrl(hero || r.TargetHero || r.Hero);
+            const avInner = locked ? LOCK_SVG : escTL((primary || '?').trim().charAt(0).toUpperCase())
                 + (iconUrl ? '<img src="' + escTL(iconUrl) + '" alt="" loading="lazy" data-drop="1">' : '');
 
             const level = ledgerLevel(r);
@@ -3152,11 +3185,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const others = cands.filter(x => x !== shown).slice(0, 2);
             const why = (Array.isArray(r.Why) ? r.Why : []).map(ledgerWhyText).filter(Boolean);
             const sub = [];
+            if (locked) sub.push('<a class="rep-unlock" href="' + escTL(trialBuyUrl()) + '" target="_blank" rel="noopener noreferrer">' + escTL(tr('Get a key to see who')) + '</a>');
             if (hero) sub.push(escTL(hero));
             if (!ours && level !== 'sure') sub.push('<i class="rep-unsure">≈ ' + escTL(shown ? tr('likely') + ' ' + Math.round(shown.share * 100) + '%' : tr('not certain')) + '</i>');
 
             const row = document.createElement('div');
-            row.className = 'rep-row ' + (ally ? 'ally' : 'enemy') + ' lvl-' + level + (level !== 'sure' ? ' rep-unsure-row' : '');
+            row.className = 'rep-row ' + (ally ? 'ally' : 'enemy') + ' lvl-' + level + (level !== 'sure' ? ' rep-unsure-row' : '') + (locked ? ' rep-locked' : '');
             if (pl && pl.id) { row.classList.add('rep-clickable'); row.dataset.sid = pl.id; }
             if (!ours && cands.length) row.title = tr('Who it may be') + ':\n' + cands.map(x => (x === shown ? '★ ' : '• ') + candName(x.c) + ' — ' + Math.round(x.share * 100) + '%').join('\n');
             else if (!ours && level !== 'sure') row.title = tr('The replay does not show this report with certainty');
@@ -3170,7 +3204,7 @@ document.addEventListener('DOMContentLoaded', () => {
             row.innerHTML =
                 '<span class="rep-time">' + escTL(ledgerFmtTime(r.Time) || '—') + '</span>' +
                 '<span class="rep-av">' + avInner + '</span>' +
-                '<span class="rep-who"><b>' + escTL(primary) + '</b>' + (sub.length ? '<small>' + sub.join(' · ') + '</small>' : '') + '</span>' +
+                '<span class="rep-who"><b>' + (locked ? '<i class="rep-blur" aria-hidden="true">' + 'Xxxxxxxx'.slice(0, 5 + (parseTimeToMinutes(r.Time) | 0) % 4) + '</i><span class="sr-only">' + escTL(tr('Hidden player')) + '</span>' : escTL(primary)) + '</b>' + (sub.length ? '<small>' + sub.join(' · ') + '</small>' : '') + '</span>' +
                 (target ? '<span class="rep-target">&rarr; ' + escTL(target) + '</span>' : '<span class="rep-target"></span>') +
                 '<span class="rep-tags">' + (ours ? '<span class="rep-lvl ' + level + '">' + escTL(tr(LVL[level])) + '</span>' : '') +
                 '<span class="rep-tag ' + (ally ? 'ally' : 'enemy') + '">' + escTL(ally ? tr('Report from teammate') : tr('Report from enemy')) + '</span></span>' +
@@ -4610,6 +4644,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderScoreboardActivityGraph(matchData, playerFilter = null) {
         timelineGraphContainer.classList.remove('as-list');
+        if (matchData && matchData.trial) {
+            timelineGraphContainer.innerHTML = trialLockCard('Scoreboard is part of the full version', 'Who opened the scoreboard and when shows who sent a report, so it stays hidden in the free trial.');
+            hideGraphLoading();
+            return;
+        }
         if (!matchData || !matchData.scoreboardActivities || matchData.scoreboardActivities.length === 0) {
             timelineGraphContainer.innerHTML = '<p class="graph-empty">No scoreboard activity found for this match.</p>';
             hideGraphLoading();

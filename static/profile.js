@@ -123,21 +123,23 @@
         const tier = TIER[me.role === 'admin' ? 'admin' : me.tier] || (me.expiresAt ? TIER.month : TIER.forever);
         const forever = !me.expiresAt;
         const players = window.LedgerPlayers ? window.LedgerPlayers.list().length : 0;
-        const ach = achievements(s, mySid, { now, activatedAt: me.activatedAt, forever, players });
+        const ach = achievements(s, mySid, { now, activatedAt: me.activatedAt, forever: forever && !me.trial, players });
         const doneN = ach.filter((a) => a.done).length;
         const favHero = Object.keys(s.heroes).sort((a, b) => s.heroes[b] - s.heroes[a])[0] || '';
         const fav = favHero && window.ledgerHeroInfo ? window.ledgerHeroInfo(favHero) : null;
         const hater = Object.values(s.haters).sort((a, b) => b.n - a.n)[0] || null;
         const name = (me.steam && me.steam.name) || me.label || T('Your key');
         // badge: Admin / Forever, else the key's own length ("30 days"), not a rounded tier
-        const tierLabel = me.role === 'admin' ? (ru() ? TIER.admin.ru : TIER.admin.en) : forever ? (ru() ? TIER.forever.ru : TIER.forever.en)
+        const tr0 = me.trial || null;
+        const tierLabel = tr0 ? T('Free trial') : me.role === 'admin' ? (ru() ? TIER.admin.ru : TIER.admin.en) : forever ? (ru() ? TIER.forever.ru : TIER.forever.en)
             : me.durationDays > 0 ? me.durationDays + ' ' + daysWord(me.durationDays) : (ru() ? tier.ru : tier.en);
 
         // subscription
         const left = me.expiresAt ? Math.max(0, Math.ceil((me.expiresAt - now) / DAY)) : null;
         const total = me.durationDays > 0 ? me.durationDays : (me.activatedAt && me.expiresAt ? Math.max(1, Math.round((me.expiresAt - me.activatedAt) / DAY)) : 0);
-        const subFrac = forever ? 1 : (total ? Math.max(0.02, Math.min(1, left / total)) : 0);
-        const subColor = forever ? 'gold' : left <= 3 ? 'red' : left <= 10 ? 'amber' : 'green';
+        const subFrac = tr0 ? Math.max(0.02, (tr0.left || 0) / Math.max(1, tr0.limit || 1)) : forever ? 1 : (total ? Math.max(0.02, Math.min(1, left / total)) : 0);
+        const subColor = tr0 ? (tr0.left ? 'amber' : 'red') : forever ? 'gold' : left <= 3 ? 'red' : left <= 10 ? 'amber' : 'green';
+        const trialLine = tr0 ? (ru() ? 'Сегодня ' + tr0.left + ' из ' + tr0.limit + ' бесплатных разборов' : tr0.left + ' of ' + tr0.limit + ' free replays left today') : '';
         const since = me.activatedAt ? Math.max(0, Math.floor((now - me.activatedAt) / DAY)) : null;
 
         back = document.createElement('div');
@@ -166,7 +168,18 @@
 
             + '<div class="pf-body">'
             + '<div class="pf-grid">'
-            + '<section class="pf-card pf-sub">'
+            + (tr0 ? '<section class="pf-card pf-sub">'
+            + '<div class="pf-ring-wrap">' + ring(subFrac, subColor) + '<div class="pf-ring-num"><b data-count="' + (tr0.left || 0) + '">0</b><small>' + esc(T('today')) + '</small></div></div>'
+            + '<div class="pf-sub-text"><h3>' + esc(T('Free trial')) + '</h3>'
+            + '<p class="pf-sub-big ' + subColor + '">' + esc(trialLine) + '</p>'
+            + '<p class="pf-sub-line">' + esc(T('Who reported you stays hidden until you enter a key.')) + '</p>'
+            + '<a class="pf-renew" target="_blank" rel="noopener noreferrer" href="https://t.me/' + encodeURIComponent(me.telegram || 'm4ks1em') + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4 3 11l6 2 2 6 3-4 5 4z"/><path d="m9 13 9-7"/></svg>' + esc(T('Buy a key in Telegram')) + '</a>'
+            + '</div></section>'
+            + '<section class="pf-card pf-key"><h3>' + esc(T('Key')) + '</h3><dl>'
+            + '<dt>' + esc(T('Key code')) + '</dt><dd>' + esc(T('No key yet')) + '</dd>'
+            + '<dt>' + esc(T('Version')) + '</dt><dd>' + esc(me.version || '') + '</dd>'
+            + '</dl><a class="pf-renew" href="/login">' + esc(T('Enter a key')) + '</a></section>'
+            : '<section class="pf-card pf-sub">'
             + '<div class="pf-ring-wrap">' + ring(subFrac, subColor) + '<div class="pf-ring-num">' + (forever ? '<b class="inf">∞</b>' : '<b data-count="' + left + '">0</b><small>' + esc(daysWord(left)) + '</small>') + '</div></div>'
             + '<div class="pf-sub-text"><h3>' + esc(T('Subscription')) + '</h3>'
             + '<p class="pf-sub-big ' + subColor + '">' + esc(forever ? T('Forever') : (left === 0 ? T('Expired') : T('Subscription active'))) + '</p>'
@@ -179,7 +192,7 @@
             + '<dt>' + esc(T('Computers')) + '</dt><dd>' + (me.devices || 1) + ' / ' + (me.maxDevices || 1) + '</dd>'
             + '<dt>' + esc(T('Version')) + '</dt><dd>' + esc(me.version || '') + '</dd>'
             + '<dt>' + esc(T('Key server')) + '</dt><dd class="' + (me.offline ? 'bad' : 'ok') + '"><i></i>' + esc(me.offline ? T('No connection') : T('Online')) + '</dd>'
-            + '</dl></section>'
+            + '</dl></section>')
             + '</div>'
 
             + '<div class="pf-stats">'

@@ -290,3 +290,26 @@ html[data-theme="light"] .gate-trust svg { stroke: #a35a26; }
 :root:not([data-theme="light"]) .gate-name span { background: linear-gradient(120deg, #ffe7b0 10%, #ffd77a 55%, #e0a84e); -webkit-background-clip: text; background-clip: text; }
 :root:not([data-theme="light"]) .gate-trust svg, :root:not([data-theme="light"]) .fc-ic { background: rgba(255, 255, 255, 0.08); }
 :root:not([data-theme="light"]) .gate-trust svg, :root:not([data-theme="light"]) .fc-ic svg, :root:not([data-theme="light"]) .fc-ic.c1 svg, :root:not([data-theme="light"]) .fc-ic.c4 svg { stroke: #ffe6a6; }
+
+/* free trial button (Steam signed in, no key) */
+.trial-btn {
+    display: flex; align-items: center; gap: 14px; padding: 12px 16px 12px 12px; border-radius: 20px; cursor: pointer;
+    color: var(--text-primary); text-decoration: none; user-select: none;
+    background: linear-gradient(120deg, rgba(255, 215, 122, 0.16), rgba(255, 215, 122, 0.04)); border: 1px solid rgba(255, 215, 122, 0.32);
+    box-shadow: 0 18px 40px -28px rgba(255, 200, 100, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: transform 0.35s var(--spring), border-color 0.3s, background 0.3s;
+    animation: gate-in 0.8s var(--spring) 0.19s both;
+}
+.trial-btn:hover { transform: translateY(-2px); border-color: #ffd77a; }
+.trial-btn:active { transform: scale(0.985); }
+.trial-btn:focus-visible { outline: 2px solid #ffd77a; outline-offset: 3px; }
+.trial-btn.busy { opacity: 0.6; pointer-events: none; }
+.trial-ic { display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0; border-radius: 13px; background: linear-gradient(160deg, #ffe7b0, #e0a84e); box-shadow: 0 10px 22px -10px #e0a84e; }
+.trial-ic svg { width: 21px; height: 21px; fill: #3a2606; }
+.trial-txt { display: flex; flex-direction: column; min-width: 0; }
+.trial-txt b { font-weight: 700; font-size: 1rem; }
+.trial-txt small { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
+.trial-btn .steam-go { stroke: #ffd77a; }
+.trial-btn:hover .steam-go { transform: translateX(3px); }
+:root[data-theme="light"] .trial-btn { background: linear-gradient(120deg, rgba(224, 168, 78, 0.16), rgba(224, 168, 78, 0.05)); border-color: rgba(176, 106, 54, 0.35); }
+:root[data-theme="light"] .trial-btn .steam-go { stroke: #b06a36; }

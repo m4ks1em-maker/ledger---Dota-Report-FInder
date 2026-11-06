@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/версия-2.27.0-ffd77a?style=flat-square" alt="Версия">
+  <img src="https://img.shields.io/badge/версия-2.28.0-ffd77a?style=flat-square" alt="Версия">
   <img src="https://img.shields.io/badge/платформа-Windows-2d2d2d?style=flat-square&logo=windows&logoColor=white" alt="Windows">
   <img src="https://img.shields.io/badge/движок-свой%20·%20Go%20·%20manta-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Свой движок на Go">
   <img src="https://img.shields.io/badge/дизайн-liquid%20glass-8fc7ff?style=flat-square" alt="Liquid glass">
@@ -44,6 +44,8 @@
 </p>
 
 ## 🆕 Что нового
+
+**2.28 — пробный режим.** Ключа нет? Войди через Steam и нажми «Попробовать бесплатно»: 2 реплея в день, видно, когда и от какой команды тебя репортили. Кто именно — открывается с ключом.
 
 **2.27 — liquid glass.** Тёмная тема переделана целиком: полупрозрачные стеклянные карточки, за страницей размытый арт героя из твоего матча (зелёный оттенок после победы, красный после поражения), меню и кнопки-«таблетки», спокойные заголовки. Светлая тема осталась прежней.
 
@@ -109,7 +111,7 @@ DotaTraker смотрит на то, что в реплее осталось: к
 1. Установи [Node.js](https://nodejs.org) (версия LTS).
 2. [Скачай ZIP](https://github.com/m4ks1em-maker/ledger---Dota-Report-FInder/archive/refs/heads/main.zip) и распакуй.
 3. Открой `setup.bat` (один раз), потом `start.bat`.
-4. Войди через Steam (официальный сайт steamcommunity.com) и введи ключ.
+4. Войди через Steam (официальный сайт steamcommunity.com) и введи ключ — или нажми «Попробовать бесплатно»: 2 реплея в день без ключа.
 
 > [!TIP]
 > Без интернета DotaTraker продолжает работать до 3 дней — ключ проверяется периодически, а не при каждом запуске.

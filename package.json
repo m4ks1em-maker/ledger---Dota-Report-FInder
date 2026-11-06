@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.27.1",
+  "version": "2.28.0",
   "engineRev": "6",
-  "releaseNotes": "Liquid glass reaches the sign-in page and the update bar. Correct plurals on the report gauge (\"1 report\").",
-  "releaseNotesRu": "Liquid glass теперь и на странице входа, и в плашке обновления. Правильный падеж на кольце репортов («1 репорт»).",
+  "releaseNotes": "Free trial: sign in through Steam and analyse 2 replays a day without a key. You see when and from which team you were reported; who did it opens with a key.",
+  "releaseNotesRu": "Пробный режим: войди через Steam и разбирай 2 реплея в день без ключа. Видно, когда и от какой команды тебя зарепортили; кто именно — открывается с ключом.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

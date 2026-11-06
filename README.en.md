@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.27.0-ffd77a?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.28.0-ffd77a?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/platform-Windows-2d2d2d?style=flat-square&logo=windows&logoColor=white" alt="Windows">
   <img src="https://img.shields.io/badge/engine-own%20·%20Go%20·%20manta-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Own Go engine">
   <img src="https://img.shields.io/badge/design-liquid%20glass-8fc7ff?style=flat-square" alt="Liquid glass">
@@ -44,6 +44,8 @@
 </p>
 
 ## 🆕 What's new
+
+**2.28 — free trial.** No key yet? Sign in through Steam and press "Try it free": 2 replays a day, you see when and from which team you were reported. Who did it opens with a key.
 
 **2.27 — liquid glass.** The dark theme is rebuilt: frosted see-through cards, a blurred backdrop of the hero from your match (green after a win, red after a loss), pill-shaped menu and buttons, calmer headings. The light theme stays as it was.
 
@@ -109,7 +111,7 @@ DotaTraker uses what the replay still has: every scoreboard look (who, when, how
 1. Install [Node.js](https://nodejs.org) (LTS).
 2. [Download the ZIP](https://github.com/m4ks1em-maker/ledger---Dota-Report-FInder/archive/refs/heads/main.zip) and unpack it.
 3. Run `setup.bat` once, then `start.bat`.
-4. Sign in through Steam (the official steamcommunity.com page) and enter your key.
+4. Sign in through Steam (the official steamcommunity.com page) and enter your key — or press "Try it free": 2 replays a day without a key.
 
 > [!TIP]
 > Offline, DotaTraker keeps working for up to 3 days: the key is checked now and then, not on every start.

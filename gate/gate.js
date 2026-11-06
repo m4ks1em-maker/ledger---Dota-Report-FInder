@@ -230,10 +230,10 @@ function saveSessions() {
     clearTimeout(sessTimer);
     sessTimer = setTimeout(() => { try { writeJsonAtomic(SESSIONS_FILE, [...sessions.entries()]); } catch (_) {} }, 300);
 }
-function openSession(req) {
+function openSession(req, extra) {
     const sid = b64url(crypto.randomBytes(32));
     const exp = now() + Math.max(1, settings.sessionDays) * DAY;
-    sessions.set(sha256(sid), { created: now(), expires: exp, ua: String(req.headers['user-agent'] || '').slice(0, 120) });
+    sessions.set(sha256(sid), Object.assign({ created: now(), expires: exp, ua: String(req.headers['user-agent'] || '').slice(0, 120) }, extra || {}));
     saveSessions();
     return { sid, exp };
 }
@@ -606,23 +606,83 @@ function forwardToOldEngine(res, apiPath, body, timeoutMs) {
     res.on('close', () => r.destroy());
     r.end(data);
 }
-async function analyseApi(req, res, mode) {
+/* ------------------------------------------------------------ free trial */
+
+// Without a key you can sign in through Steam and try DotaTraker: TRIAL_PER_DAY new replays a
+// day (opening one again the same day is free). Reports still show when and from which team,
+// but not who sent them: the reporter, the scoreboard tab and other players' chat stay hidden
+// until a key is entered. Reports you made yourself are shown in full.
+const TRIAL_FILE = path.join(DATA_DIR, 'trial.json');
+const TRIAL_PER_DAY = Math.max(0, Math.min(50, Number(APP.trialPerDay != null ? APP.trialPerDay : 2) || 0));
+const localDay = (t) => { const d = new Date(t == null ? now() : t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+let trialDb = readJson(TRIAL_FILE, {});
+function trialToday() {
+    const day = localDay();
+    if (trialDb.day !== day || !Array.isArray(trialDb.used)) trialDb = { day, used: [] };
+    return trialDb;
+}
+function trialView() {
+    const t = trialToday();
+    const d = new Date(); d.setHours(24, 0, 0, 0);
+    return { limit: TRIAL_PER_DAY, used: Math.min(t.used.length, TRIAL_PER_DAY), left: Math.max(0, TRIAL_PER_DAY - t.used.length), resetsAt: d.getTime(), telegram: TELEGRAM };
+}
+const trialSeen = (id) => trialToday().used.includes(id);
+function trialUse(id) {
+    const t = trialToday();
+    if (t.used.includes(id)) return;
+    t.used.push(id);
+    try { writeJsonAtomic(TRIAL_FILE, t); } catch (_) {}
+}
+// the parse result with every reporter but you hidden (SteamIDs stay exact: they become strings)
+function trialRedact(text) {
+    const r = JSON.parse(text.replace(/"(TargetSteamID|SteamID)":\s*(\d+)/g, '"$1":"$2"'));
+    const mine = String((settings.steam && settings.steam.id) || '');
+    const players = Array.isArray(r.Players) ? r.Players : [];
+    const meP = mine ? players.find((p) => p && String(p.SteamID) === mine) : null;
+    const me = meP ? meP.Slot : -99;
+    const hide = (x) => {
+        if (!x || x.Slot === me) return x;
+        const why = (Array.isArray(x.Why) ? x.Why : []).filter((w) => w && w.Code !== 'died')
+            .map((w) => (w.Code === 'said_report' || w.Code === 'said_reported') ? { Code: 'said_hidden' } : w);
+        return Object.assign({}, x, { Slot: -1, SteamID: '0', Name: 'Hidden player', Hero: '', Locked: true, Why: why });
+    };
+    r.Reports = (Array.isArray(r.Reports) ? r.Reports : []).map(hide);
+    r.Possible = (Array.isArray(r.Possible) ? r.Possible : []).map(hide);
+    r.scoreboardActivities = (Array.isArray(r.scoreboardActivities) ? r.scoreboardActivities : []).filter((a) => a && a.Slot === me);
+    const chat = Array.isArray(r.Chat) ? r.Chat : [];
+    r.Chat = chat.filter((c) => c && c.Slot === me);
+    players.forEach((p) => { if (p && p.Slot !== me) { p.ScoreboardOpens = 0; p.ScoreboardSecs = 0; p.ReportWindows = 0; } });
+    r.Trial = Object.assign(trialView(), { hiddenChat: chat.length - r.Chat.length, you: meP ? meP.Slot : null });
+    return JSON.stringify(r);
+}
+
+async function analyseApi(req, res, mode, trial) {
     let body;
     try { body = await readBody(req); } catch (_) { return sendJson(res, 400, { error: 'Bad request' }); }
     const apiPath = mode === 'players' ? '/api/player-info' : '/api/parse';
-    if (!dtparseVersion() || process.env.DTPARSE_OFF === '1') return forwardToOldEngine(res, apiPath, body, 10 * MIN);
+    const ourEngine = dtparseVersion() && process.env.DTPARSE_OFF !== '1';
+    const trialParse = trial && mode === 'parse';
+    if (trialParse && !ourEngine) return sendJson(res, 503, { error: 'The replay engine is updating. Try again in a minute.', code: 'engine_wait' });
+    if (!ourEngine) return forwardToOldEngine(res, apiPath, body, 10 * MIN);
     let file;
     try { file = await replayFileFor(body); } catch (_) { file = null; }
+    if (!file && trialParse) return sendJson(res, 404, { error: 'This replay file was not found.', code: 'replay' });
     if (!file) return forwardToOldEngine(res, apiPath, body, 10 * MIN);
     const matchId = /^\d{5,20}$/.test(String(body.matchId || '')) ? String(body.matchId) : '';
+    const trialId = matchId || path.basename(file).toLowerCase();
+    if (trialParse && !trialSeen(trialId) && trialToday().used.length >= TRIAL_PER_DAY) {
+        return sendJson(res, 402, { error: 'Free trial: ' + TRIAL_PER_DAY + ' replays a day. Get a key to analyse without limits.', code: 'trial_limit', trial: trialView() });
+    }
     try {
-        const text = await dtparseFile(mode, file, matchId);
+        let text = await dtparseFile(mode, file, matchId);
+        if (trialParse) { trialUse(trialId); text = trialRedact(text); }
         const buf = Buffer.from(text, 'utf8');
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': buf.length, 'Cache-Control': 'no-store', 'X-DotaTraker-Engine': dtparseVersion() });
         return res.end(buf);
     } catch (e) {
         console.log(`[gate] dtparse could not read ${path.basename(file)}: ${e.message}`);
         if (e.replay) return sendJson(res, 422, { error: 'Could not read this replay: ' + e.message, code: 'replay' });
+        if (trialParse) return sendJson(res, 502, { error: 'The replay engine could not read this replay.', code: 'engine' });
         return forwardToOldEngine(res, apiPath, body, 10 * MIN); // our engine failed to run: let the old one try
     }
 }
@@ -1459,9 +1519,10 @@ function steamView() {
 
 /* ------------------------------------------------------------- login API */
 
-function meView() {
-    const l = lic.license || {};
+function meView(trial) {
+    const l = trial ? {} : (lic.license || {});
     return {
+        trial: trial ? trialView() : null,
         label: l.label || '', tail: l.tail || '', status: l.status || '', expiresAt: l.expiresAt || null,
         activatedAt: l.activatedAt || null, maxDevices: l.maxDevices || 1, devices: l.devices || 1,
         durationDays: l.durationDays != null ? l.durationDays : null, tier: l.tier || '', role: l.role || '',
@@ -1525,8 +1586,17 @@ async function handle(req, res) {
             telegram: TELEGRAM, github: GITHUB, configured: SERVER_CONFIGURED, version: VERSION,
             problem: problem === 'none' ? null : problem,
             denied: lic.denied, label: lic.license ? lic.license.label : '', offline: !!lic.offline,
-            prices: Array.isArray(APP.prices) ? APP.prices.slice(0, 8) : DEFAULT_PRICES, steam: steamView(), update: updateView()
+            prices: Array.isArray(APP.prices) ? APP.prices.slice(0, 8) : DEFAULT_PRICES, steam: steamView(), update: updateView(),
+            trial: TRIAL_PER_DAY > 0 ? { limit: TRIAL_PER_DAY } : null
         });
+    }
+    if (pathname === '/_ledger/trial' && method === 'POST') {
+        if (!TRIAL_PER_DAY) return sendJson(res, 403, { error: 'The free trial is off.', code: 'trial_off' });
+        if (!settings.steam || !settings.steam.id) return sendJson(res, 400, { error: 'Sign in through Steam first.', code: 'steam' });
+        if (lic.token && !licenseProblem()) return sendJson(res, 200, { ok: true, trial: null });   // a working key: no need
+        const old = getSession(req); if (old) { sessions.delete(old.hash); }
+        const { sid, exp } = openSession(req, { trial: true }); setSessionCookie(res, sid, exp);
+        return sendJson(res, 200, { ok: true, trial: trialView() });
     }
     if (pathname === '/_ledger/update' && method === 'POST') {
         if (!updateView()) { await checkUpdate(); if (!updateView()) return sendJson(res, 200, { ok: true, update: null }); }
@@ -1575,7 +1645,9 @@ async function handle(req, res) {
     const problem = licenseProblem();
     // locked out only because the server was not reached lately: try again now, not in 10 min
     if (problem === 'offline' && lic.token && Math.abs(now() - (lic.lastCheck || 0)) > MIN) checkLicense();
-    if (!session || problem) {
+    // a trial session (Steam, no key) gets in while there is no working key; with one it is a normal session
+    const trial = !!(session && session.trial && problem && TRIAL_PER_DAY > 0);
+    if (!session || (problem && !trial)) {
         if (session && problem && problem !== 'offline') { sessions.delete(session.hash); saveSessions(); }
         if (pathname.startsWith('/api/') || pathname.startsWith('/_ledger/')) return sendJson(res, 401, { error: 'Sign in required', code: problem || 'signin' });
         res.writeHead(302, { Location: '/login' });
@@ -1583,8 +1655,11 @@ async function handle(req, res) {
     }
     if (lic.token && Math.abs(now() - (lic.lastCheck || 0)) > CHECK_EVERY) checkLicense();
 
-    if (pathname === '/_ledger/me' && method === 'GET') return sendJson(res, 200, meView());
-    if (pathname === '/_ledger/me/refresh' && method === 'POST') { await checkLicense(); return licenseProblem() ? sendJson(res, 401, { error: 'Sign in required', code: licenseProblem() }) : sendJson(res, 200, meView()); }
+    if (pathname === '/_ledger/me' && method === 'GET') return sendJson(res, 200, meView(trial));
+    if (pathname === '/_ledger/me/refresh' && method === 'POST') {
+        if (trial) return sendJson(res, 200, meView(true));
+        await checkLicense(); return licenseProblem() ? sendJson(res, 401, { error: 'Sign in required', code: licenseProblem() }) : sendJson(res, 200, meView());
+    }
     if (pathname === '/_ledger/logout' && method === 'POST') {
         sessions.delete(session.hash); saveSessions();
         if (url.searchParams.get('forget') !== '0') { lic.token = ''; lic.denied = null; saveLicense(); }
@@ -1601,9 +1676,14 @@ async function handle(req, res) {
     if (pathname.startsWith('/_ledger/')) return sendJson(res, 404, { error: 'Not found' });
 
     // ---- the app
+    // the trial gets the replay list and replay analysis; the bot, report-card checks and the
+    // old engine's history and search need a key
+    if (trial && pathname.startsWith('/api/') && !/^\/api\/(config|browse|replays|download|progress|delete|hero-icon\/[^/]+|parse|player-info)$/.test(pathname)) {
+        return sendJson(res, 402, { error: 'This needs a key.', code: 'trial_locked', trial: trialView() });
+    }
     if (pathname === '/api/config' && method === 'POST') return configApi(req, res);
-    if (pathname === '/api/parse' && method === 'POST') return analyseApi(req, res, 'parse');
-    if (pathname === '/api/player-info' && method === 'POST') return analyseApi(req, res, 'players');
+    if (pathname === '/api/parse' && method === 'POST') return analyseApi(req, res, 'parse', trial);
+    if (pathname === '/api/player-info' && method === 'POST') return analyseApi(req, res, 'players', trial);
     if (pathname.startsWith('/api/')) return proxy(req, res);
 
     if (method === 'GET' || method === 'HEAD') {

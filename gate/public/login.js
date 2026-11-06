@@ -121,7 +121,7 @@
 
     /* ---------- Steam ---------- */
     const steamMsg = {
-        ok: ['Steam account linked. Now enter your key.', 'ok'],
+        ok: ['Steam account linked. Enter your key or try it free.', 'ok'],
         other: ['This key is linked to another Steam account.', 'bad'],
         cancel: ['Steam sign-in was cancelled.', 'bad'],
         expired: ['The Steam sign-in took too long. Try again.', 'bad'],
@@ -134,6 +134,31 @@
         $('steam-me').classList.remove('hidden');
         $('steam-name').textContent = st.name || st.id;
         if (st.avatar) $('steam-av').src = st.avatar; else $('steam-av').removeAttribute('src');
+    }
+    /* ---------- free trial: Steam sign-in, no key ---------- */
+    function renderTrial(info) {
+        const b = $('trial-btn');
+        if (!b || !info.trial || !info.configured) return;
+        const n = Number(info.trial.limit) || 2;
+        b.classList.remove('hidden');
+        $('trial-sub').textContent = info.steam
+            ? (window.LedgerI18n && LedgerI18n.lang === 'ru' ? n + ' ' + LedgerI18n.plural(n, 'реплей', 'реплея', 'реплеев') + ' в день · кто репортил скрыт' : n + ' replays a day · who reported stays hidden')
+            : T('Sign in through Steam first, it takes a few seconds');
+        if (!info.steam) return;   // the link goes to Steam; it comes back here with the trial ready
+        b.removeAttribute('href'); b.setAttribute('role', 'button'); b.tabIndex = 0;
+        const go = async () => {
+            if (b.classList.contains('busy')) return;
+            b.classList.add('busy');
+            try {
+                const r = await fetch('/_ledger/trial', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Ledger': '1' }, body: '{}' });
+                const j = await r.json().catch(() => ({}));
+                if (r.ok && j.ok) { location.replace('/'); return; }
+                showError(j.error || 'Could not start the trial.', j.code);
+            } catch (_) { showError('Could not start the trial.', 'offline'); }
+            b.classList.remove('busy');
+        };
+        b.addEventListener('click', go);
+        b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
     }
     const q = new URLSearchParams(location.search).get('steam');
     if (q && steamMsg[q]) {
@@ -152,6 +177,7 @@
         if (info.github) { const fg = $('feat-gh'); if (fg) fg.href = info.github; }
         if (Array.isArray(info.prices) && info.prices.length) renderPrices(info.prices);
         renderSteam(info.steam);
+        renderTrial(info);
         if (window.LedgerUI) LedgerUI.updateBar($('update'), info.update, info.github);
         if (!info.configured) showError('The key server address is not set in ledger.config.json.', 'setup');
         else if (info.denied && info.denied.code) showError(info.denied.message, info.denied.code);

@@ -855,13 +855,23 @@
             else av.textContent = ((me.steam && me.steam.name) || me.label || 'D').trim().charAt(0).toUpperCase();
             const who = document.createElement('span'); who.className = 'who'; who.textContent = (me.steam && me.steam.name) || me.label || T('Your key');
             chip.append(av, who);
-            if (d != null) { const l = document.createElement('span'); l.className = 'left'; l.textContent = d + ' ' + T('d'); chip.appendChild(l); }
+            if (me.trial) { const l = document.createElement('span'); l.className = 'left trial'; l.textContent = T('Trial'); chip.appendChild(l); }
+            else if (d != null) { const l = document.createElement('span'); l.className = 'left'; l.textContent = d + ' ' + T('d'); chip.appendChild(l); }
             chip.classList.toggle('warn', d != null && d <= 3);
             chip.title = me.offline ? T('No connection to the key server. DotaTraker keeps working and checks again later.') : '';
 
             // the key tile on the home tab
             const tile = document.getElementById('key-tile');
-            if (tile) {
+            if (tile && me.trial) {
+                const t = me.trial, ruL = window.LedgerI18n && window.LedgerI18n.lang === 'ru';
+                tile.classList.add('trial'); tile.classList.remove('warn'); tile.classList.toggle('bad', !t.left);
+                const h = tile.querySelector('h3'); if (h) h.textContent = T('Free trial');
+                document.getElementById('key-days').textContent = String(t.left);
+                document.getElementById('key-days-label').textContent = ruL ? window.LedgerI18n.plural(t.left, 'разбор', 'разбора', 'разборов') + ' сегодня' : (t.left === 1 ? 'replay left today' : 'replays left today');
+                document.getElementById('key-meta').textContent = T('Who reported you stays hidden until you enter a key.');
+                const renew = document.getElementById('key-renew'); if (renew) { renew.href = tgUrl(me); const sp = renew.querySelector('span'); if (sp) sp.textContent = T('Buy a key in Telegram'); }
+                const tg = document.getElementById('key-tg'); if (tg) tg.textContent = '@' + (me.telegram || 'm4ks1em');
+            } else if (tile) {
                 const days = document.getElementById('key-days'), label = document.getElementById('key-days-label'), meta = document.getElementById('key-meta');
                 if (d == null) { days.textContent = '∞'; label.textContent = T('no expiry'); }
                 else { LedgerUI.countTo(days, d); label.textContent = window.LedgerI18n && window.LedgerI18n.lang === 'ru' ? window.LedgerI18n.plural(d, 'день остался', 'дня осталось', 'дней осталось') : (d === 1 ? 'day left' : 'days left'); }
@@ -1067,6 +1077,17 @@
         const wheels = ((m && m.events) || []).filter((e) => e.Type === 'chat_wheel').map((e) => { e._k = 'wheel'; return e; });
         const all = chat.concat(wheels).sort((a, b) => clSecs(a.Time) - clSecs(b.Time));
         chatPane.textContent = '';
+        const hiddenChat = m && m.trial ? (Number(m.trial.hiddenChat) || 0) : 0;
+        if (m && m.trial) {
+            const tl = document.createElement('div'); tl.className = 'trial-lock slim';
+            const tg = 'https://t.me/' + encodeURIComponent((window.LedgerTrial && window.LedgerTrial.telegram()) || 'm4ks1em');
+            tl.innerHTML = '<span class="tl-ic"><svg class="lock-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.6"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span>'
+                + '<b>' + esc(hiddenChat ? (window.LedgerI18n && window.LedgerI18n.lang === 'ru' ? 'Скрыто ' + hiddenChat + ' ' + window.LedgerI18n.plural(hiddenChat, 'сообщение', 'сообщения', 'сообщений') + ' других игроков' : hiddenChat + (hiddenChat === 1 ? ' message' : ' messages') + ' from other players hidden') : T('Chat of other players is hidden')) + '</b>'
+                + '<p>' + esc(T('In chat players write whom they reported, so it opens with a key. Your own messages are shown.')) + '</p>'
+                + '<a class="rt-cta" href="' + esc(tg) + '" target="_blank" rel="noopener noreferrer">' + esc(T('Get a key')) + '</a>';
+            chatPane.appendChild(tl);
+            if (!all.length) return;
+        }
         if (!all.length) { chatPane.innerHTML = '<p class="moments-empty">' + T('No chat in this replay.') + '</p>'; return; }
 
         // Toxicity meter: who talked most / who flamed most (text chat only)
@@ -1077,7 +1098,7 @@
             talk[n].msgs++; if (FLAME.test(c.Text || '')) talk[n].flames++;
         });
         const people = Object.values(talk);
-        if (people.length) {
+        if (people.length && !(m && m.trial)) {
             const totalFlames = people.reduce((a, p) => a + p.flames, 0);
             const topTalk = people.slice().sort((a, b) => b.msgs - a.msgs)[0];
             const topTox = people.slice().sort((a, b) => b.flames - a.flames)[0];
