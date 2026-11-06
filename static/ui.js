@@ -324,7 +324,35 @@
             if (t.classList.contains('player-selector-icon')) t.style.display = 'none';
             else if (t.hasAttribute('data-drop') || t.closest('.rep-av, .pt-av')) t.remove();
         }, true);
+        navTips();
         requestAnimationFrame(() => document.documentElement.classList.add('ready'));
+    }
+    // the header shows a label only on the active tab: the others get a HUD label on hover / focus
+    function navTips() {
+        const nav = document.querySelector('.main-header .workflow-tabs');
+        if (!nav) return;
+        const tip = document.createElement('div'); tip.className = 'nav-tip'; tip.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(tip);
+        let cur = null;
+        const show = (tab) => {
+            if (!tab || tab.classList.contains('active') || window.matchMedia('(max-width: 760px)').matches) return hide();
+            const lab = tab.querySelector('.tab-label');
+            const text = (lab && lab.textContent.trim()) || tab.getAttribute('title') || '';
+            if (!text) return hide();
+            cur = tab; tip.textContent = text;
+            const r = tab.getBoundingClientRect();
+            tip.style.left = Math.round(r.left + r.width / 2) + 'px'; tip.style.top = Math.round(r.bottom + 8) + 'px';
+            tip.classList.add('on');
+        };
+        const hide = () => { cur = null; tip.classList.remove('on'); };
+        nav.addEventListener('pointerover', (e) => { const t = e.target.closest('.workflow-tab'); if (t !== cur) show(t); });
+        nav.addEventListener('pointerleave', hide);
+        nav.addEventListener('focusin', (e) => show(e.target.closest('.workflow-tab')));
+        nav.addEventListener('focusout', hide);
+        nav.addEventListener('click', hide);
+        window.addEventListener('scroll', hide, { passive: true });
+        // the native title tooltip would show on top of ours
+        nav.querySelectorAll('.workflow-tab[title]').forEach((t) => { t.dataset.title = t.getAttribute('title'); t.removeAttribute('title'); });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

@@ -409,8 +409,11 @@
                 hist[id] = {
                     a: Date.now(), d: (hist[id] && hist[id].od && hist[id].d) || dates[base] || (hist[id] && hist[id].d) || null, od: (hist[id] && hist[id].od) || 0,
                     r: (m.reports || []).map((r) => [r.Time, r.Slot, String(r.SteamID || ''), r.Name || '', r.Hero || '', r.Team === 'FRIENDLY' ? 1 : 0, String(r.TargetSteamID || ''), r.TargetName || '', r.TargetHero || '', r.Confirmed === false ? 0 : 1]),
-                    // roster [steamId64, hero, slot, team]: lets the profile find your hero and your matches
-                    p: (m.players || []).slice(0, 10).map((p) => [(window.ledgerSid ? window.ledgerSid(p.SteamID) : String(p.SteamID || '')), p.Hero || '', p.Slot, p.Team])
+                    // roster [steamId64, hero, slot, team, kills, deaths, assists]: lets the profile, home and replay list find your hero and your matches
+                    p: (m.players || []).slice(0, 10).map((p) => [(window.ledgerSid ? window.ledgerSid(p.SteamID) : String(p.SteamID || '')), p.Hero || '', p.Slot, p.Team, Number(p.Kills) || 0, Number(p.Deaths) || 0, Number(p.Assists) || 0]),
+                    w: m.winner || (hist[id] && hist[id].w) || 0,          // winning team (2 Radiant, 3 Dire)
+                    du: m.duration || (hist[id] && hist[id].du) || 0,      // seconds
+                    pc: Array.isArray(m.possible) ? m.possible.length : 0   // "possible" reports, not counted
                 };
                 // fill target names/heroes from the roster when the report did not carry them
                 const roster = {}; (m.players || []).forEach((p) => { roster[p.Slot] = p; });
@@ -473,7 +476,7 @@
             bars($('st-minutes'), minute, minute.map((_, i) => (i === 9 ? '90+' : i * 10 + '–' + (i * 10 + 9))));
 
             const dated = ids.map((id) => ({ id, t: hist[id].d ? new Date(hist[id].d).getTime() : hist[id].a, n: hist[id].r.length })).sort((a, b) => a.t - b.t).slice(-16);
-            bars($('st-permatch'), dated.map((x) => x.n), dated.map((x) => new Date(x.t).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })));
+            bars($('st-permatch'), dated.map((x) => x.n), dated.map((x) => new Date(x.t).toLocaleDateString(window.LedgerI18n ? window.LedgerI18n.locale : undefined, { day: '2-digit', month: '2-digit' })));
 
             const toRows = (m) => [...m.values()].sort((a, b) => b.n - a.n || b.ms.size - a.ms.size).map((e) => ({ label: e.label, sub: e.sub ? e.sub : (e.ms.size > 1 ? e.ms.size + ' ' + T('Matches').toLowerCase() : ''), n: e.n }));
             list($('st-top'), toRows(got), 8); list($('st-reporters'), toRows(gave), 8); list($('st-heroes'), toRows(hero), 8);
@@ -489,7 +492,9 @@
             if (!od || !od.startTime || !hist[String(od.matchId)]) return;
             const d = new Date(od.startTime * 1000).toISOString();
             if (hist[String(od.matchId)].d === d) return;
-            hist[String(od.matchId)].d = d; hist[String(od.matchId)].od = 1; save(); render();
+            hist[String(od.matchId)].d = d; hist[String(od.matchId)].od = 1;
+            if (!hist[String(od.matchId)].w && od.radiantWin != null) hist[String(od.matchId)].w = od.radiantWin ? 2 : 3;
+            save(); render();
         });
         render();
     })();
@@ -507,12 +512,127 @@
         // tiles that act like links
         document.querySelectorAll('[data-go]').forEach((t) => t.addEventListener('click', () => goTab(t.dataset.go)));
 
-        // numbers
+        // ---- numbers strip + "last match" card (from the matches analysed in this browser)
+        const ru = () => !!(window.LedgerI18n && window.LedgerI18n.lang === 'ru');
+        const pl = (n, a, b, c) => (window.LedgerI18n ? window.LedgerI18n.plural(n, a, b, c) : (n === 1 ? a : c));
+        const L = {
+            matches: (n) => ru() ? pl(n, 'матч проанализирован', 'матча проанализировано', 'матчей проанализировано') : (n === 1 ? 'match analysed' : 'matches analysed'),
+            reports: (n) => ru() ? pl(n, 'репорт найден', 'репорта найдено', 'репортов найдено') : (n === 1 ? 'report found' : 'reports found'),
+            onme: (n) => ru() ? pl(n, 'репорт на тебя', 'репорта на тебя', 'репортов на тебя') : (n === 1 ? 'report on you' : 'reports on you'),
+            clean: (n) => ru() ? pl(n, 'чистый матч', 'чистых матча', 'чистых матчей') : (n === 1 ? 'clean match' : 'clean matches'),
+            link: () => ru() ? 'привяжи Steam, чтобы считать свои' : 'link Steam to count yours'
+        };
+        let meSid = '', meAsked = false;
+        function askMe() {
+            if (meAsked) return; meAsked = true;
+            fetch('/_ledger/me', { credentials: 'same-origin', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((m) => {
+                const id = m && m.steam && m.steam.id ? String(m.steam.id) : '';
+                meSid = window.ledgerSid ? window.ledgerSid(id) : id;
+                if (meSid) { numbers(); lastMatch(); }
+            }).catch(() => {});
+        }
+        const readHist = () => { try { return JSON.parse(localStorage.getItem('ledgerHistory') || '{}') || {}; } catch (_) { return {}; } };
+        const mine = (h) => (meSid && Array.isArray(h.p) ? h.p.find((x) => x && x[0] === meSid) : null);
         function numbers() {
-            let hist = {}; try { hist = JSON.parse(localStorage.getItem('ledgerHistory') || '{}') || {}; } catch (_) {}
+            const hist = readHist();
             const ids = Object.keys(hist);
-            LedgerUI.countTo($('hm-matches'), ids.length);
-            LedgerUI.countTo($('hm-reports'), ids.reduce((n, id) => n + ((hist[id].r || []).length), 0));
+            const total = ids.reduce((n, id) => n + ((hist[id].r || []).length), 0);
+            LedgerUI.countTo($('hm-matches'), ids.length); $('hm-matches-l').textContent = L.matches(ids.length);
+            LedgerUI.countTo($('hm-reports'), total); $('hm-reports-l').textContent = L.reports(total);
+            let onMe = 0, clean = 0, played = 0;
+            ids.forEach((id) => {
+                const h = hist[id]; if (!mine(h)) return;
+                played++;
+                const n = (h.r || []).filter((r) => r[6] === meSid).length;
+                onMe += n; if (!n) clean++;
+            });
+            const known = !!meSid && played > 0;
+            ['onme', 'clean'].forEach((k) => $('hm-' + k + '-c').classList.toggle('muted', !known));
+            if (known) {
+                LedgerUI.countTo($('hm-onme'), onMe); $('hm-onme-l').textContent = L.onme(onMe);
+                LedgerUI.countTo($('hm-clean'), clean); $('hm-clean-l').textContent = L.clean(clean);
+            } else {
+                $('hm-onme').textContent = '—'; $('hm-onme-l').textContent = meSid ? L.onme(0) : L.link();
+                $('hm-clean').textContent = '—'; $('hm-clean-l').textContent = L.clean(0);
+            }
+        }
+        function ago(t) {
+            const s = Math.max(0, (Date.now() - t) / 1000);
+            if (s < 3600) { const m = Math.max(1, Math.round(s / 60)); return ru() ? m + ' мин назад' : m + ' min ago'; }
+            if (s < 86400) { const h = Math.round(s / 3600); return ru() ? h + ' ' + pl(h, 'час', 'часа', 'часов') + ' назад' : h + ' h ago'; }
+            const d = Math.round(s / 86400);
+            if (d < 31) return ru() ? d + ' ' + pl(d, 'день', 'дня', 'дней') + ' назад' : d + (d === 1 ? ' day ago' : ' days ago');
+            return new Date(t).toLocaleDateString(window.LedgerI18n ? window.LedgerI18n.locale : undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        function openMatch(id) {
+            const sel = $('match-selector');
+            const opt = sel ? [...sel.options].find((o) => o.dataset.matchId === String(id)) : null;
+            if (opt) { sel.value = opt.value; sel.dispatchEvent(new Event('change')); goTab('results'); return; }
+            // not open in this session: analyse it again (the engine keeps the result, so this is instant)
+            window.ledgerPathOverride = [String(id) + '.dem']; window.ledgerNoJump = false; window.ledgerSilentDone = false;
+            const b = $('start-parse'); if (b) b.click();
+        }
+        const ART_EMPTY = '<svg class="hl-empty-line" viewBox="0 0 600 64" preserveAspectRatio="none" aria-hidden="true"><path class="hl-axis" d="M8 40H592"/><g class="hl-ticks"><path d="M8 36v8M104 37v6M200 37v6M296 37v6M392 37v6M488 37v6M592 36v8"/></g>'
+            + '<circle class="hl-dot r" cx="96" cy="40" r="7" style="--d:0"/><circle class="hl-dot d" cx="182" cy="22" r="7" style="--d:1"/><circle class="hl-dot r" cx="241" cy="40" r="7" style="--d:2"/><circle class="hl-dot d" cx="330" cy="40" r="7" style="--d:3"/><circle class="hl-dot d" cx="330" cy="20" r="7" style="--d:4"/><circle class="hl-dot r" cx="446" cy="40" r="7" style="--d:5"/><circle class="hl-dot d" cx="531" cy="40" r="7" style="--d:6"/></svg>';
+        function lastMatch() {
+            const box = $('hm-last'); if (!box) return;
+            const hist = readHist();
+            const ids = Object.keys(hist).sort((a, b) => (hist[b].a || 0) - (hist[a].a || 0));
+            box.textContent = '';
+            box.className = 'tile t-last';
+            if (!ids.length) {
+                box.classList.add('empty');
+                box.innerHTML = '<span class="t-eyebrow">' + LedgerUI.esc(ru() ? 'Последний матч' : 'Last match') + '</span>' + ART_EMPTY
+                    + '<b class="tl-empty-t">' + LedgerUI.esc(ru() ? 'Здесь появится твой последний матч' : 'Your last match shows up here') + '</b>'
+                    + '<p>' + LedgerUI.esc(ru() ? 'Отметь реплеи на вкладке «Реплеи» или найди игрока слева. Кто кого репортил, герой и итог будут тут.' : 'Tick replays on the Replays tab or look a player up. Who reported whom, your hero and the result land here.') + '</p>'
+                    + '<button type="button" class="btn primary-btn tl-go" data-go-tab="browse">' + LedgerUI.esc(ru() ? 'Выбрать реплеи' : 'Pick replays') + '</button>';
+                box.querySelector('.tl-go').addEventListener('click', () => goTab('browse'));
+                return;
+            }
+            const id = ids[0], h = hist[id];
+            const roster = Array.isArray(h.p) ? h.p : [];
+            const me = mine(h);
+            const reports = h.r || [];
+            // whose match card: yours if you played, else the most reported player
+            let focus = me, onFocus = 0;
+            if (!focus && roster.length) {
+                const cnt = {}; reports.forEach((r) => { cnt[r[6]] = (cnt[r[6]] || 0) + 1; });
+                focus = roster.slice().sort((a, b) => (cnt[b[0]] || 0) - (cnt[a[0]] || 0))[0];
+            }
+            if (focus) onFocus = reports.filter((r) => r[6] === focus[0]).length;
+            const info = focus && typeof ledgerHeroInfo === 'function' ? ledgerHeroInfo(focus[1]) : null;
+            const won = h.w && focus ? (Number(focus[3]) === Number(h.w)) : null;
+            if (won === true) box.classList.add('win'); else if (won === false) box.classList.add('loss');
+            const when = h.d ? Date.parse(h.d) : h.a;
+            const dur = h.du ? Math.floor(h.du / 60) + ':' + String(Math.floor(h.du % 60)).padStart(2, '0') : '';
+            const kda = focus && focus.length >= 7 ? focus[4] + ' / ' + focus[5] + ' / ' + focus[6] : '';
+            const esc = LedgerUI.esc;
+            const heroName = info ? info.name : (focus && focus[1]) || (ru() ? 'Матч' : 'Match');
+            const who = me ? '' : (focus ? '<span class="tl-who">' + esc(ru() ? 'Больше всех репортов' : 'Most reported') + '</span>' : '');
+            const verdict = onFocus
+                ? '<div class="tl-rep bad"><b>' + onFocus + '</b><span>' + esc(me ? L.onme(onFocus) : (ru() ? pl(onFocus, 'репорт', 'репорта', 'репортов') : (onFocus === 1 ? 'report' : 'reports'))) + '</span></div>'
+                : '<div class="tl-rep good"><b>0</b><span>' + esc(ru() ? (me ? 'Чисто, на тебя не репортили' : 'Чистый матч') : (me ? 'Clean, nobody reported you' : 'Clean match')) + '</span></div>';
+            const extra = (h.pc ? '<span class="tl-poss">+' + h.pc + ' ' + esc(ru() ? pl(h.pc, 'возможный', 'возможных', 'возможных') : 'possible') + '</span>' : '');
+            box.innerHTML =
+                (info ? '<div class="tl-art" aria-hidden="true"><img alt="" data-drop="1" src="/_ledger/od/heroart?k=png&h=' + encodeURIComponent(info.npc) + '"></div>' : '')
+                + '<div class="tl-body">'
+                + '<span class="t-eyebrow">' + esc(ru() ? 'Последний матч' : 'Last match') + ' · ' + esc(ago(when || Date.now())) + '</span>'
+                + who
+                + '<h3 class="tl-hero">' + esc(heroName) + '</h3>'
+                + '<div class="tl-meta">'
+                + (won === true ? '<i class="tl-wl w">' + esc(ru() ? 'Победа' : 'Victory') + '</i>' : won === false ? '<i class="tl-wl l">' + esc(ru() ? 'Поражение' : 'Defeat') + '</i>' : '')
+                + (kda ? '<span class="tl-kda">' + esc(kda) + '</span>' : '')
+                + (dur ? '<span>' + esc(dur) + '</span>' : '')
+                + '<span class="tl-id">#' + esc(id) + '</span>'
+                + '</div>'
+                + verdict + extra
+                + '<div class="tl-actions"><button type="button" class="btn primary-btn tl-open">' + esc(ru() ? 'Открыть матч' : 'Open match') + '</button>'
+                + '<button type="button" class="btn text-btn tl-all">' + esc(ru() ? 'Все матчи' : 'All matches') + ' →</button></div>'
+                + '</div>';
+            box.querySelector('.tl-open').addEventListener('click', () => openMatch(id));
+            box.querySelector('.tl-all').addEventListener('click', () => goTab((window.ledgerMatches || []).length ? 'results' : 'stats'));
+            const img = box.querySelector('.tl-art img');
+            if (img) img.addEventListener('load', () => box.classList.add('art-on'));
         }
         // saved players
         function saved() {
@@ -526,15 +646,15 @@
                 c.appendChild(b); box.appendChild(c);
             });
         }
-        document.addEventListener('ledger:matches', () => { numbers(); saved(); });
+        document.addEventListener('ledger:matches', () => { setTimeout(() => { numbers(); lastMatch(); }, 0); saved(); });
         document.addEventListener('ledger:players', saved);
-        document.addEventListener('ledger:lang', saved);
-        numbers(); saved();
+        document.addEventListener('ledger:lang', () => { saved(); numbers(); lastMatch(); });
+        numbers(); saved(); lastMatch(); askMe();
 
         // lookup
         let rows = [], account = null, busy = false;
         const msg = (t, bad) => { $('lk-msg').textContent = t || ''; $('lk-msg').classList.toggle('bad', !!bad); };
-        const when = (sec) => { const d = new Date(sec * 1000); return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) + ' · ' + String(Math.round(d.getHours())).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+        const when = (sec) => { const d = new Date(sec * 1000); return d.toLocaleDateString(window.LedgerI18n ? window.LedgerI18n.locale : undefined, { day: '2-digit', month: 'short' }) + ' · ' + String(Math.round(d.getHours())).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
         const dur = (s) => Math.round(s / 60) + ' min';
         function count() { const n = rows.filter((r) => r.box.checked).length; $('lk-count').textContent = n + ' / ' + rows.length; $('lk-go').disabled = busy || !n; $('lk-go').textContent = n ? T('Analyse') + ' ' + n : T('Analyse'); }
         function setState(r, text, cls) { r.state.textContent = text; r.state.className = 'lk-state ' + (cls || ''); }

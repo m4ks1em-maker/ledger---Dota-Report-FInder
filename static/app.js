@@ -1013,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formatDate = (timestamp) => {
             if (!timestamp || timestamp === 0) return 'N/A';
             const date = new Date(timestamp * 1000);
-            return date.toLocaleString('en-US', {
+            return date.toLocaleString(window.LedgerI18n ? window.LedgerI18n.locale : 'en-GB', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',
@@ -1380,6 +1380,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 reports: result.Reports || [],
                 possible: ledgerCleanReports(result.Possible, result.Players),
                 engine: String(result.Engine || ''),
+                winner: Number(result.Winner) || 0,
+                duration: Number(result.Duration) || 0,
                 scoreboardActivities: result.scoreboardActivities || [],
                 players: result.Players || [],
                 events: result.Events || [],
@@ -2020,9 +2022,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return bytes > 1048576 ? (bytes / 1048576).toFixed(0) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
     }
 
+    // What we already know about a replay from the matches analysed in this browser (hero, result, reports).
+    let rpMe = '', rpMeAsked = false, lastBrowseItems = null;
+    const rpRu = () => !!(window.LedgerI18n && window.LedgerI18n.lang === 'ru');
+    const rpPl = (n, a, b, c) => (window.LedgerI18n ? window.LedgerI18n.plural(n, a, b, c) : (n === 1 ? a : c));
+    function rpAskMe() {
+        if (rpMeAsked) return; rpMeAsked = true;
+        fetch('/_ledger/me', { credentials: 'same-origin', cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).then(m => {
+            rpMe = m && m.steam && m.steam.id ? ledgerSid(m.steam.id) : '';
+            if (rpMe && lastBrowseItems) renderBrowseList(lastBrowseItems, true);
+        }).catch(() => {});
+    }
+    function rpHist() { try { return JSON.parse(localStorage.getItem('ledgerHistory') || '{}') || {}; } catch (_) { return {}; } }
+    function rpInfo(h) {
+        if (!h) return null;
+        const roster = Array.isArray(h.p) ? h.p : [];
+        const me = rpMe ? roster.find(x => x && x[0] === rpMe) : null;
+        const reports = Array.isArray(h.r) ? h.r : [];
+        const onMe = me ? reports.filter(r => r[6] === rpMe).length : 0;
+        const byMe = me ? reports.filter(r => r[2] === rpMe).length : 0;
+        const won = me && h.w ? Number(me[3]) === Number(h.w) : null;
+        return { me, hero: me ? me[1] : '', won, onMe, byMe, total: reports.length, possible: h.pc || 0, dur: h.du || 0, kda: me && me.length >= 7 ? me[4] + '/' + me[5] + '/' + me[6] : '' };
+    }
+    document.addEventListener('ledger:matches', () => { if (lastBrowseItems) setTimeout(() => renderBrowseList(lastBrowseItems, true), 50); });
+    document.addEventListener('ledger:lang', () => { if (lastBrowseItems) renderBrowseList(lastBrowseItems, true); });
+
     // Rebuilt every time in the server's order (folders first, newest replay first), so "Latest N"
     // always picks the newest ones. Ticks and scroll position survive a refresh.
     function renderBrowseList(items, preserveState = false) {
+        lastBrowseItems = items;
+        rpAskMe();
+        const hist = rpHist();
         const checked = new Set(Array.from(replayList.querySelectorAll('.replay-item input[type="checkbox"]:checked')).map(cb => cb.value));
         const scrollTop = replayList.scrollTop;
         const shown = (items || []).filter(item => item.isDir || (item.isFile && /\.dem$/i.test(item.name)));
@@ -2063,16 +2093,59 @@ document.addEventListener('DOMContentLoaded', () => {
                 box.checked = checked.has(fullPath);
                 const label = document.createElement('label');
                 label.htmlFor = id;
+                const info = rpInfo(hist[matchId]);
+                const ru = rpRu();
+                // hero portrait (yours, once the match is analysed) or a replay file icon
+                const av = document.createElement('span');
+                av.className = 'rp-hero';
+                const heroInfo = info && info.hero ? ledgerHeroInfo(info.hero) : null;
+                const icon = info && info.hero ? getHeroIconUrl(info.hero) : null;
+                if (icon) { const im = document.createElement('img'); im.src = icon; im.alt = ''; im.loading = 'lazy'; im.setAttribute('data-drop', '1'); av.appendChild(im); av.appendChild(document.createTextNode((heroInfo ? heroInfo.name : info.hero).charAt(0))); }
+                else av.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9.5 13.5l2 2 3.5-4"/></svg>';
+                const main = document.createElement('span');
+                main.className = 'rp-main';
                 const name = document.createElement('span');
                 name.className = 'replay-name';
                 name.textContent = matchId;
-                label.appendChild(name);
+                main.appendChild(name);
+                const sub = document.createElement('span');
+                sub.className = 'rp-sub';
+                if (info) {
+                    const parts = [];
+                    if (heroInfo || info.hero) parts.push(heroInfo ? heroInfo.name : info.hero);
+                    if (info.won === true) parts.push('<b class="w">' + (ru ? 'Победа' : 'Win') + '</b>');
+                    else if (info.won === false) parts.push('<b class="l">' + (ru ? 'Поражение' : 'Loss') + '</b>');
+                    if (info.kda) parts.push(info.kda);
+                    if (info.dur) parts.push(Math.floor(info.dur / 60) + ':' + String(Math.floor(info.dur % 60)).padStart(2, '0'));
+                    sub.innerHTML = parts.length ? parts.map(x => (x.startsWith('<b') ? x : esc(x))).join('<i>·</i>') : esc(ru ? 'Разобран' : 'Analysed');
+                } else {
+                    sub.textContent = ru ? 'Ещё не разобран' : 'Not analysed yet';
+                    sub.classList.add('new');
+                }
+                main.appendChild(sub);
+                label.append(av, main);
+                const tags = document.createElement('span');
+                tags.className = 'rp-tags';
+                if (info) {
+                    if (info.me) {
+                        if (info.onMe) tags.insertAdjacentHTML('beforeend', '<span class="rp-tag bad" title="' + esc(ru ? 'Репорты на тебя' : 'Reports on you') + '">' + info.onMe + ' ' + esc(ru ? 'на тебя' : 'on you') + '</span>');
+                        else tags.insertAdjacentHTML('beforeend', '<span class="rp-tag good">' + esc(ru ? 'чисто' : 'clean') + '</span>');
+                        if (info.byMe) tags.insertAdjacentHTML('beforeend', '<span class="rp-tag" title="' + esc(ru ? 'Твои репорты' : 'Your reports') + '">' + info.byMe + ' ' + esc(ru ? 'от тебя' : 'by you') + '</span>');
+                    } else {
+                        tags.insertAdjacentHTML('beforeend', '<span class="rp-tag' + (info.total ? '' : ' good') + '">' + (info.total ? info.total + ' ' + esc(ru ? rpPl(info.total, 'репорт', 'репорта', 'репортов') : (info.total === 1 ? 'report' : 'reports')) : esc(ru ? 'без репортов' : 'no reports')) + '</span>');
+                    }
+                }
+                label.appendChild(tags);
+                if (info) {
+                    div.classList.add('analysed');
+                    if (info.won === true) div.classList.add('won'); else if (info.won === false) div.classList.add('lost');
+                }
                 if (item.date) {
                     const d = new Date(item.date);
                     if (!isNaN(d.getTime()) && d.getFullYear() > 2000) {
                         const when = document.createElement('span');
                         when.className = 'date-display';
-                        when.textContent = d.toLocaleString(undefined, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+                        when.textContent = d.toLocaleString(window.LedgerI18n ? window.LedgerI18n.locale : undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                         label.appendChild(when);
                     }
                 }
@@ -2337,6 +2410,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     reports: result.Reports || [],
                     possible: ledgerCleanReports(result.Possible, result.Players),
                     engine: String(result.Engine || ''),
+                    winner: Number(result.Winner) || 0,
+                    duration: Number(result.Duration) || 0,
                     scoreboardActivities: result.scoreboardActivities || [],
                     players: result.Players || [],
                     events: result.Events || [],

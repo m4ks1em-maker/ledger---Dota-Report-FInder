@@ -491,7 +491,7 @@
         [/^wrote \u201c([\s\S]*)\u201d$/, (m) => 'написал «' + m[1] + '»'],
         [/^(\d+) toxic messages?$/, (m) => m[1] + ' ' + plural(+m[1], 'токсичное сообщение', 'токсичных сообщения', 'токсичных сообщений')],
         [/^died (\d+) times in 5 min$/, (m) => 'умер ' + m[1] + ' ' + plural(+m[1], 'раз', 'раза', 'раз') + ' за 5 мин'],
-        [/^(\d+) match(?:es)? analysed$/, (m) => m[1] + ' ' + plural(+m[1], 'матч', 'матча', 'матчей') + ' проанализировано'],
+        [/^(\d+) match(?:es)? analysed$/, (m) => m[1] + ' ' + plural(+m[1], 'матч проанализирован', 'матча проанализировано', 'матчей проанализировано')],
         [/^Match (\d+) \((\d+) reports?\)$/, (m) => 'Матч ' + m[1] + ' (' + m[2] + ' ' + plural(+m[2], 'репорт', 'репорта', 'репортов') + ')'],
         [/^Processing (\d+) \/ (\d+): (\d+)$/, (m) => 'Обработка ' + m[1] + ' / ' + m[2] + ': ' + m[3]],
         [/^Processing \((\d+)s\)\.\.\.$/, (m) => 'Обработка (' + m[1] + ' с)...'],
@@ -620,7 +620,7 @@
         visit(el);
         return out.trim();
     }
-    window.LedgerI18n = { t: (s) => (lang === 'ru' ? tr(s) : s), src, get lang() { return lang; }, get theme() { return theme; }, plural };
+    window.LedgerI18n = { t: (s) => (lang === 'ru' ? tr(s) : s), src, get lang() { return lang; }, get theme() { return theme; }, get locale() { return lang === 'ru' ? 'ru-RU' : 'en-GB'; }, plural };
     function start() {
         buildSwitch();
         if (lang === 'ru') { run(document.body); root.__title = document.title; document.title = document.title.replace('Sign in', 'Вход').replace('Dota 2 report timeline', 'кто кого репортил в Dota 2'); }

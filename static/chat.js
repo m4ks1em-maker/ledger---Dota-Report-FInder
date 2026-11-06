@@ -191,7 +191,7 @@
             if (lastId === 0 && typeof r.body.older === 'boolean') hasOlder = r.body.older;
             // mutes end on the key server's clock, not this PC's
             if (me && me.banned) { setGate('Вы заблокированы в чате.'); }
-            else if (me && me.mutedUntil && me.mutedUntil > Date.now() + clockSkew) { setGate('Вы в муте до ' + new Date(me.mutedUntil - clockSkew).toLocaleTimeString()); }
+            else if (me && me.mutedUntil && me.mutedUntil > Date.now() + clockSkew) { setGate('Вы в муте до ' + new Date(me.mutedUntil - clockSkew).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })); }
             else setGate('');
             appendMessages(r.body.messages || [], true);
             buildLegend();

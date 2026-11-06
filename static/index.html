@@ -7,10 +7,10 @@
     <meta name="color-scheme" content="dark light">
     <title>DotaTraker — Dota 2 report timeline</title>
     <link rel="icon" href="/img/logo-64.png" type="image/png">
-    <link rel="stylesheet" href="fonts.css?v=72">
-    <link rel="stylesheet" href="style.css?v=72">
-    <script src="i18n.js?v=72"></script>
-    <script src="ui.js?v=72"></script>
+    <link rel="stylesheet" href="fonts.css?v=73">
+    <link rel="stylesheet" href="style.css?v=73">
+    <script src="i18n.js?v=73"></script>
+    <script src="ui.js?v=73"></script>
 </head>
 
 <body>
@@ -167,19 +167,7 @@
             <div class="tab-content active" id="home-tab">
                 <div class="bento">
                     <section class="tile t-lookup">
-                        <div class="hero-line" aria-hidden="true">
-                            <svg viewBox="0 0 600 64" preserveAspectRatio="none">
-                                <path class="hl-axis" d="M8 40H592"/>
-                                <g class="hl-ticks"><path d="M8 36v8M104 37v6M200 37v6M296 37v6M392 37v6M488 37v6M592 36v8"/></g>
-                                <circle class="hl-dot r" cx="96" cy="40" r="7" style="--d:0"/>
-                                <circle class="hl-dot d" cx="182" cy="22" r="7" style="--d:1"/>
-                                <circle class="hl-dot r" cx="241" cy="40" r="7" style="--d:2"/>
-                                <circle class="hl-dot d" cx="330" cy="40" r="7" style="--d:3"/>
-                                <circle class="hl-dot d" cx="330" cy="20" r="7" style="--d:4"/>
-                                <circle class="hl-dot r" cx="446" cy="40" r="7" style="--d:5"/>
-                                <circle class="hl-dot d" cx="531" cy="40" r="7" style="--d:6"/>
-                            </svg>
-                        </div>
+                        <span class="t-eyebrow">Player lookup</span>
                         <h2>Who do you want to check?</h2>
                         <p>Paste a Steam ID. We find their latest matches, fetch the replays and show who they reported and who reported them. No Steam login.</p>
                         <form id="lk-form" class="lk-form" autocomplete="off">
@@ -203,6 +191,15 @@
                         </div>
                     </section>
 
+                    <section class="tile t-last" id="hm-last" aria-live="polite"></section>
+
+                    <section class="tile t-strip" aria-label="Your numbers">
+                        <button type="button" class="hs-cell" data-go="results"><span class="kpi" id="hm-matches">0</span><span class="hs-label" id="hm-matches-l">matches analysed</span></button>
+                        <button type="button" class="hs-cell" data-go="stats"><span class="kpi" id="hm-reports">0</span><span class="hs-label" id="hm-reports-l">reports found</span></button>
+                        <button type="button" class="hs-cell bad" data-go="stats" id="hm-onme-c"><span class="kpi" id="hm-onme">—</span><span class="hs-label" id="hm-onme-l">reports on you</span></button>
+                        <button type="button" class="hs-cell good" data-go="stats" id="hm-clean-c"><span class="kpi" id="hm-clean">—</span><span class="hs-label" id="hm-clean-l">clean matches</span></button>
+                    </section>
+
                     <section class="tile t-upload">
                         <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload replays">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
@@ -212,10 +209,6 @@
                         </div>
                     </section>
 
-                    <div class="kpi-row">
-                        <button type="button" class="tile t-kpi link" data-go="results"><span class="kpi" id="hm-matches" data-count>0</span><span class="tile-label">matches analysed</span></button>
-                        <button type="button" class="tile t-kpi link" data-go="stats"><span class="kpi" id="hm-reports" data-count>0</span><span class="tile-label">reports found</span></button>
-                    </div>
 
                     <section class="tile t-saved">
                         <h3>Saved players</h3>
@@ -764,14 +757,14 @@
     <div class="chat-tip hidden" id="chat-tip"></div>
 
     <script src="vendor/chart.umd.min.js?v=4.4.0"></script>
-    <script src="app.js?v=72"></script>
-    <script src="chatwheel.js?v=72"></script>
-    <script src="history.js?v=72"></script>
-    <script src="ledger.js?v=72"></script>
-    <script src="tools.js?v=72"></script>
-    <script src="chat.js?v=72"></script>
-    <script src="share.js?v=72"></script>
-    <script src="profile.js?v=72"></script>
+    <script src="app.js?v=73"></script>
+    <script src="chatwheel.js?v=73"></script>
+    <script src="history.js?v=73"></script>
+    <script src="ledger.js?v=73"></script>
+    <script src="tools.js?v=73"></script>
+    <script src="chat.js?v=73"></script>
+    <script src="share.js?v=73"></script>
+    <script src="profile.js?v=73"></script>
 </body>
 
 </html>
