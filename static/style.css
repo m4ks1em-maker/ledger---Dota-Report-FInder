@@ -2416,3 +2416,10 @@ html[data-theme="light"] .moments-switch button.on { background: #eef2f9; box-sh
 :root:not([data-theme="light"]) .done-bar span::before { box-shadow: 0 0 0 4px rgba(79, 240, 180, 0.18); }
 :root:not([data-theme="light"]) .tools-switch button { white-space: nowrap; flex: 0 0 auto; padding: 0 18px; }
 @media (max-width: 760px) { :root:not([data-theme="light"]) .tools-switch { max-width: 100%; overflow-x: auto; scrollbar-width: none; } }
+:root:not([data-theme="light"]) .copper-btn, :root:not([data-theme="light"]) .update-bar .ub-go {
+    background: linear-gradient(180deg, #ffffff, #dce7f5) !important; color: #0b1220 !important; border-radius: 999px !important;
+    box-shadow: inset 0 1px 0 #fff, 0 12px 28px -12px rgba(170, 210, 255, 0.75) !important;
+}
+:root:not([data-theme="light"]) .copper-btn:disabled { filter: none; opacity: 0.45; }
+:root:not([data-theme="light"]) .update-bar { border-radius: 26px; background: var(--lg-mat); border: 1px solid rgba(255, 255, 255, 0.12); border-top-color: rgba(255, 255, 255, 0.28); box-shadow: var(--lg-shadow); backdrop-filter: var(--lg-blur); -webkit-backdrop-filter: var(--lg-blur); }
+:root:not([data-theme="light"]) .update-bar .btn { border-radius: 999px; }

@@ -1431,7 +1431,7 @@
         if (fb) items.push(['blood', tshow(fb.Time), T('first blood')]);
         if (rosh) items.push(['rosh', rosh, T('Roshan')]);
         if (cour) items.push(['courier', cour, T('couriers')]);
-        if (reps.length) items.push(['report', reps.length, T('reports')]);
+        if (reps.length) items.push(['report', reps.length, (window.LedgerI18n && window.LedgerI18n.lang === 'ru') ? window.LedgerI18n.plural(reps.length, 'репорт', 'репорта', 'репортов') : (reps.length === 1 ? 'report' : 'reports')]);
         if (tox) items.push(['flame', tox, T('toxic')]);
         if (wheel) items.push(['wheel', wheel, T('chat wheel')]);
         hlPane.textContent = '';
@@ -1532,7 +1532,7 @@
         const e = parseInt(en ? en.textContent : '0', 10) || 0;
         box.classList.remove('hidden');
         if (numEl) numEl.textContent = n;
-        if (labelEl) labelEl.textContent = T('reports');
+        if (labelEl) labelEl.textContent = (window.LedgerI18n && window.LedgerI18n.lang === 'ru') ? window.LedgerI18n.plural(n, 'репорт', 'репорта', 'репортов') : (n === 1 ? 'report' : 'reports');
         if (titleEl) titleEl.textContent = verdict(n);
         if (subEl) subEl.textContent = f + ' ' + T('from teammates') + ' · ' + e + ' ' + T('from enemies');
         if (arc) { const frac = Math.min(n / 8, 1); arc.style.transition = 'stroke-dashoffset .9s cubic-bezier(.22,.8,.24,1)'; arc.style.strokeDashoffset = String(C * (1 - frac)); }

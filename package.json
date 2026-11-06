@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.27.0",
+  "version": "2.27.1",
   "engineRev": "6",
-  "releaseNotes": "New look: liquid glass. Frosted see-through cards over a blurred backdrop of your hero (tinted green after a win, red after a loss), pill-shaped menu and buttons, white primary buttons, cleaner type without all-caps. The light theme stays as it was. Also: the match flow chart no longer squeezes into a third of its box when the match was analysed on another tab.",
-  "releaseNotesRu": "Новый вид: liquid glass. Полупрозрачные стеклянные карточки поверх размытого арта твоего героя (зелёный оттенок после победы, красный после поражения), меню и кнопки-«таблетки», белые главные кнопки, спокойные заголовки без капса. Светлая тема осталась прежней. Ещё: график «Ход матча» больше не сжимается в треть блока, если матч разобрали на другой вкладке.",
+  "releaseNotes": "Liquid glass reaches the sign-in page and the update bar. Correct plurals on the report gauge (\"1 report\").",
+  "releaseNotesRu": "Liquid glass теперь и на странице входа, и в плашке обновления. Правильный падеж на кольце репортов («1 репорт»).",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

@@ -262,3 +262,31 @@ html[data-theme="light"] .gate-trust svg { stroke: #a35a26; }
     .feat-cta { flex-direction: column; }
     .feat-cta .btn { justify-content: center; }
 }
+
+/* ===== liquid glass (dark theme) for the sign-in page — matches the app ===== */
+:root:not([data-theme="light"]) .aurora.copper .a1 { background: radial-gradient(circle at 40% 40%, rgba(90, 120, 255, 0.22), transparent 62%); }
+:root:not([data-theme="light"]) .aurora.copper .a2 { background: radial-gradient(circle at 60% 60%, rgba(255, 90, 120, 0.14), transparent 62%); }
+:root:not([data-theme="light"]) .aurora.copper .a3 { background: radial-gradient(circle, rgba(170, 120, 255, 0.14), transparent 64%); }
+:root:not([data-theme="light"]) .gate-card, :root:not([data-theme="light"]) .price-card, :root:not([data-theme="light"]) .steam-box, :root:not([data-theme="light"]) .feat-card {
+    background: var(--lg-mat); border: 1px solid rgba(255, 255, 255, 0.1); border-top-color: rgba(255, 255, 255, 0.26); box-shadow: var(--lg-shadow);
+    backdrop-filter: var(--lg-blur); -webkit-backdrop-filter: var(--lg-blur); border-radius: 30px;
+}
+:root:not([data-theme="light"]) .gate-card::before { background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.07), transparent 45%); }
+:root:not([data-theme="light"]) .price-card::after { background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 65%); }
+:root:not([data-theme="light"]) .gs-glider { border-radius: 999px; background: var(--lg-on); box-shadow: var(--lg-on-shadow); }
+:root:not([data-theme="light"]) .gate-switch { border-radius: 999px; background: var(--lg-track); box-shadow: var(--lg-track-shadow); border: 0; }
+:root:not([data-theme="light"]) .copper-btn, :root:not([data-theme="light"]) .price-cta {
+    border-radius: 999px; color: #0b1220; background: linear-gradient(180deg, #ffffff, #dce7f5); border: 0;
+    box-shadow: inset 0 1px 0 #fff, 0 12px 28px -12px rgba(170, 210, 255, 0.75);
+}
+:root:not([data-theme="light"]) .copper-btn:disabled { filter: none; opacity: 0.45; }
+:root:not([data-theme="light"]) .price-row { border-radius: 20px; background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.07); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+:root:not([data-theme="light"]) .price-row:hover { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); }
+:root:not([data-theme="light"]) .price-row.best { background: linear-gradient(120deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05)); border-color: rgba(255, 255, 255, 0.24); }
+:root:not([data-theme="light"]) .price-row.best .pr-price { color: #fff; }
+:root:not([data-theme="light"]) .price-row.best .pr-tag { color: #0b1220; background: linear-gradient(180deg, #ffffff, #dce7f5); }
+:root:not([data-theme="light"]) .price-kicker { text-transform: none; letter-spacing: 0; font: 600 0.78rem var(--font-ui); color: var(--text-secondary); background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.14); }
+:root:not([data-theme="light"]) .key-dots i.on, :root:not([data-theme="light"]) .key-dots span:nth-child(4) i.on { background: #fff; }
+:root:not([data-theme="light"]) .gate-name span { background: linear-gradient(120deg, #ffe7b0 10%, #ffd77a 55%, #e0a84e); -webkit-background-clip: text; background-clip: text; }
+:root:not([data-theme="light"]) .gate-trust svg, :root:not([data-theme="light"]) .fc-ic { background: rgba(255, 255, 255, 0.08); }
+:root:not([data-theme="light"]) .gate-trust svg, :root:not([data-theme="light"]) .fc-ic svg, :root:not([data-theme="light"]) .fc-ic.c1 svg, :root:not([data-theme="light"]) .fc-ic.c4 svg { stroke: #ffe6a6; }
