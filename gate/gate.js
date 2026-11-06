@@ -499,6 +499,123 @@ function supervise(name, file, extraEnv) {
     run();
 }
 function engineRevNow() { try { return fs.readFileSync(path.join(ENGINE_DIR, 'engine-rev.txt'), 'utf8').trim(); } catch (_) { return ''; } }
+
+/* ------------------------------------------------ dtparse: our own engine */
+// Replay analysis (/api/parse, /api/player-info) runs on DotaTraker's own engine, dtparse.exe:
+// one process per replay, JSON on stdout. Results are cached on disk by file + size + mtime +
+// engine version, so opening a match again is instant. Without dtparse the old engine answers.
+
+const DTPARSE = process.env.DTPARSE_BIN || engineExe('dtparse');
+const PARSE_CACHE = path.join(DATA_DIR, 'parsed');
+let dtVersion = null, dtCheckedAt = 0;
+function dtparseVersion() {
+    if (dtVersion || (dtVersion === '' && now() - dtCheckedAt < MIN)) return dtVersion;
+    dtCheckedAt = now();
+    try { dtVersion = fs.existsSync(DTPARSE) ? execFileSync(DTPARSE, ['version'], { windowsHide: true, timeout: 15000 }).toString().trim().slice(0, 60) : ''; }
+    catch (_) { dtVersion = ''; }
+    return dtVersion;
+}
+function cleanProfile(name) { return String(name || '').trim().replace(/[/\\]/g, '_').replace(/\.\./g, '_').slice(0, 80); }
+// the replay a request means: <replays>[/<profile>]/<filePath>, or its "fatal" folder, or by match id
+async function replayFileFor(body) {
+    let root;
+    try { root = path.resolve(await replayDir()); }
+    catch (_) { root = path.resolve(settings.replayDir || path.join(ROOT, 'replays')); }   // old engine down: we can still read replays
+    const base = body.profileName ? path.join(root, cleanProfile(body.profileName)) : root;
+    const inside = (f) => { const full = path.resolve(f); return (full.startsWith(base + path.sep) && /\.dem$/i.test(full)) ? full : null; };
+    const tries = [];
+    const rel = typeof body.filePath === 'string' ? body.filePath.replace(/\\/g, '/').replace(/^\/+/, '') : '';
+    if (rel) tries.push(path.join(base, rel), path.join(base, 'fatal', rel));
+    const id = /^\d{5,20}$/.test(String(body.matchId || '')) ? String(body.matchId) : '';
+    if (id) tries.push(path.join(base, id + '.dem'), path.join(base, 'uploads', id + '.dem'));
+    for (const t of tries) { const f = inside(t); if (f && fs.existsSync(f) && fs.statSync(f).isFile()) return f; }
+    if (id) {
+        try {
+            for (const d of fs.readdirSync(path.join(base, 'fatal'), { withFileTypes: true })) {
+                const f = d.isDirectory() ? path.join(base, 'fatal', d.name, id + '.dem') : (d.name === id + '.dem' ? path.join(base, 'fatal', d.name) : null);
+                if (f && inside(f) && fs.existsSync(f)) return f;
+            }
+        } catch (_) {}
+    }
+    return null;
+}
+const dtRunning = new Map(); // cache key -> promise, so two tabs asking for one replay run it once
+function runDtparse(mode, file, matchId) {
+    return new Promise((resolve, reject) => {
+        const args = [mode, file]; if (matchId) args.push(String(matchId));
+        const child = spawn(DTPARSE, args, { cwd: fs.existsSync(ENGINE_DIR) ? ENGINE_DIR : undefined, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+        const out = []; let size = 0, err = '';
+        const timer = setTimeout(() => { try { child.kill(); } catch (_) {} }, 6 * MIN);
+        child.stdout.on('data', (c) => { size += c.length; if (size > 96 * 1024 * 1024) { try { child.kill(); } catch (_) {} } else out.push(c); });
+        child.stderr.on('data', (c) => { if (err.length < 4000) err += c.toString(); });
+        child.once('error', (e) => { clearTimeout(timer); reject(e); });
+        child.once('close', (code) => {
+            clearTimeout(timer);
+            const text = Buffer.concat(out).toString('utf8').trim();
+            if (code === 0 && (text[0] === '{' || text[0] === '[')) return resolve(text);
+            let msg = '';
+            try { msg = JSON.parse(text).error || ''; } catch (_) {}
+            reject(Object.assign(new Error(msg || ('the engine stopped (' + (code == null ? 'killed' : 'exit ' + code) + ')' + (err ? ': ' + err.slice(0, 200) : ''))), { replay: !!msg }));
+        });
+    });
+}
+function pruneParseCache() {
+    try {
+        const files = fs.readdirSync(PARSE_CACHE).filter((f) => f.endsWith('.json')).map((f) => ({ f, t: fs.statSync(path.join(PARSE_CACHE, f)).mtimeMs }));
+        if (files.length <= 500) return;
+        files.sort((a, b) => a.t - b.t).slice(0, files.length - 450).forEach((x) => { try { fs.unlinkSync(path.join(PARSE_CACHE, x.f)); } catch (_) {} });
+    } catch (_) {}
+}
+async function dtparseFile(mode, file, matchId) {
+    const st = fs.statSync(file);
+    const key = crypto.createHash('sha1').update([mode, path.resolve(file).toLowerCase(), st.size, Math.round(st.mtimeMs), dtparseVersion(), matchId || ''].join('|')).digest('hex');
+    const cf = path.join(PARSE_CACHE, key + '.json');
+    try { const t = fs.readFileSync(cf, 'utf8'); if (t) { const now2 = new Date(); fs.utimes(cf, now2, now2, () => {}); return t; } } catch (_) {}
+    if (dtRunning.has(key)) return dtRunning.get(key);
+    const job = runDtparse(mode, file, matchId).then((text) => {
+        try { fs.mkdirSync(PARSE_CACHE, { recursive: true }); writeFileAtomic(cf, text); pruneParseCache(); } catch (_) {}
+        return text;
+    }).finally(() => dtRunning.delete(key));
+    dtRunning.set(key, job);
+    return job;
+}
+// hand a request to the old engine (keeps big SteamIDs exact: the answer is passed on as text)
+function forwardToOldEngine(res, apiPath, body, timeoutMs) {
+    const up = new URL(settings.upstream);
+    const data = Buffer.from(JSON.stringify(body || {}));
+    const r = http.request({ hostname: up.hostname, port: up.port || 80, path: apiPath, method: 'POST', timeout: timeoutMs,
+        headers: { 'Content-Type': 'application/json', 'Content-Length': data.length, Accept: 'application/json' } }, (ur) => {
+        res.writeHead(ur.statusCode, { 'Content-Type': ur.headers['content-type'] || 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+        ur.pipe(res);
+        const cut = () => { if (!res.writableEnded && !res.destroyed) res.destroy(); };
+        ur.on('aborted', cut); ur.on('error', cut); ur.on('close', () => { if (!ur.complete) cut(); });
+    });
+    r.on('timeout', () => r.destroy(new Error('timeout')));
+    r.on('error', () => { if (!res.headersSent) sendJson(res, 502, { error: 'The replay engine is not running. Close DotaTraker and open start.bat again.', code: 'engine' }); else if (!res.destroyed) res.destroy(); });
+    res.on('close', () => r.destroy());
+    r.end(data);
+}
+async function analyseApi(req, res, mode) {
+    let body;
+    try { body = await readBody(req); } catch (_) { return sendJson(res, 400, { error: 'Bad request' }); }
+    const apiPath = mode === 'players' ? '/api/player-info' : '/api/parse';
+    if (!dtparseVersion() || process.env.DTPARSE_OFF === '1') return forwardToOldEngine(res, apiPath, body, 10 * MIN);
+    let file;
+    try { file = await replayFileFor(body); } catch (_) { file = null; }
+    if (!file) return forwardToOldEngine(res, apiPath, body, 10 * MIN);
+    const matchId = /^\d{5,20}$/.test(String(body.matchId || '')) ? String(body.matchId) : '';
+    try {
+        const text = await dtparseFile(mode, file, matchId);
+        const buf = Buffer.from(text, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': buf.length, 'Cache-Control': 'no-store', 'X-DotaTraker-Engine': dtparseVersion() });
+        return res.end(buf);
+    } catch (e) {
+        console.log(`[gate] dtparse could not read ${path.basename(file)}: ${e.message}`);
+        if (e.replay) return sendJson(res, 422, { error: 'Could not read this replay: ' + e.message, code: 'replay' });
+        return forwardToOldEngine(res, apiPath, body, 10 * MIN); // our engine failed to run: let the old one try
+    }
+}
+
 function winPortOwner(port) {
     try {
         const ps = `$c=Get-NetTCPConnection -LocalPort ${Number(port)} -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if($c){ $p=Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Output ([string]$c.OwningProcess + '|' + $p.Path) }`;
@@ -525,7 +642,7 @@ async function startEngine() {
     }
     if (fs.existsSync(engineExe('server')) && !(await portOpen(up.hostname, up.port || 80))) await ensureEngine();
     if (await portOpen(up.hostname, up.port || 80)) { console.log('  Engine:  already running (not started by DotaTraker, it may be an old version)'); return; }
-    console.log(`  Engine:  ${engineRevNow() === ENGINE_REV ? 'up to date (parser manta 1.5.1)' : 'OLD version, could not update: see the message above'}`);
+    console.log(`  Engine:  ${engineRevNow() === ENGINE_REV ? 'up to date' + (dtparseVersion() ? ' (' + dtparseVersion() + ')' : '') : 'OLD version, could not update: see the message above'}`);
     if (!fs.existsSync(engineExe('server'))) {
         console.log('  ! The replay engine is missing. Run setup.bat first.');
         return;
@@ -1129,7 +1246,7 @@ async function ensureEngine() {
     try { cur = fs.readFileSync(marker, 'utf8').trim(); } catch (_) {}
     if (cur === ENGINE_REV) return;
     console.log('  Engine:  downloading the updated replay parser…');
-    const names = ['server.exe', 'bot.exe'];
+    const names = ['server.exe', 'bot.exe', 'dtparse.exe'];
     try {
         fs.mkdirSync(ENGINE_DIR, { recursive: true });
         for (const n of names) {
@@ -1471,6 +1588,8 @@ async function handle(req, res) {
 
     // ---- the app
     if (pathname === '/api/config' && method === 'POST') return configApi(req, res);
+    if (pathname === '/api/parse' && method === 'POST') return analyseApi(req, res, 'parse');
+    if (pathname === '/api/player-info' && method === 'POST') return analyseApi(req, res, 'players');
     if (pathname.startsWith('/api/')) return proxy(req, res);
 
     if (method === 'GET' || method === 'HEAD') {

@@ -317,6 +317,37 @@ function ledgerCandidates(r) {
     return c.map(x => ({ c: x, share: sum > 0 ? Math.max(0, x.Score || 0) / sum : 1 / c.length }))
         .sort((a, b) => b.share - a.share);
 }
+// how sure a report is: "sure" (said in chat), "likely" (a reason around the scoreboard visit),
+// "possible" (only a long look at the scoreboard). Old-engine reports: unsure ones count as likely.
+function ledgerLevel(r) {
+    const l = String((r && r.Level) || '').toLowerCase();
+    if (l === 'sure' || l === 'likely' || l === 'possible') return l;
+    return r && (r._unsure || r.Confirmed === false || ledgerCandidates(r).length > 0) ? 'likely' : 'sure';
+}
+// one piece of evidence as English text (i18n.js turns it into Russian)
+function ledgerWhyText(w) {
+    const n = Math.max(0, Math.round(Number(w && w.N) || 0));
+    const q = (t) => '\u201c' + String(t || '').trim() + '\u201d';
+    switch (w && w.Code) {
+        case 'open': return 'scoreboard open ' + n + ' s';
+        case 'died': return 'died ' + n + ' s before';
+        case 'said_reported': return 'said they reported: ' + q(w.Text);
+        case 'said_report': return 'wrote ' + q(w.Text);
+        case 'flaming': return 'was flaming in chat';
+        case 'asked': return 'someone asked to report';
+        case 'flame_before': return 'flame in chat just before';
+        case 'after_game': return 'no scoreboard around it, may have reported after the game';
+        case 'named': return 'named in chat';
+        case 'asked_them': return 'others asked to report them';
+        case 'flamed_you': return 'flamed this player';
+        case 'toxic': return n + (n === 1 ? ' toxic message' : ' toxic messages');
+        case 'died_recent': return 'died just before';
+        case 'died_often': return 'died ' + n + ' times in 5 min';
+        case 'killed_you': return 'killed them just before';
+        case 'left': return 'left the game';
+    }
+    return '';
+}
 function ledgerCleanReports(raw, players) {
     const list = Array.isArray(raw) ? raw : [];
     const teamBySlot = new Map(), slotBySid = new Map();
@@ -347,7 +378,8 @@ function ledgerCleanReports(raw, players) {
         const a = teamBySlot.get(s), b = teamBySlot.get(ts);
         if (a && b) r.Team = a === b ? 'FRIENDLY' : 'ENEMY';
         else r.Team = String(r.Team || '').toUpperCase() === 'FRIENDLY' ? 'FRIENDLY' : 'ENEMY';
-        r._unsure = r.Confirmed === false || ledgerCandidates(r).length > 0;
+        // our engine says how sure it is (sure / likely / possible); the old one only had candidates
+        r._unsure = r.Level ? ledgerLevel(r) !== 'sure' : (r.Confirmed === false || ledgerCandidates(r).length > 0);
         // Dota allows one report per player per match: the same reporter -> same target twice
         // is the same report seen twice. Keep the confirmed copy, else the earliest one.
         const who = s != null ? 's' + s : (sid ? 'i' + sid : '');
@@ -374,7 +406,7 @@ function ledgerCountReports(reports) {
     (reports || []).forEach(r => { if (r.Team === 'FRIENDLY') team++; else enemy++; if (r._unsure) unsure++; });
     return { team, enemy, unsure, total: team + enemy };
 }
-window.LedgerReports = { clean: ledgerCleanReports, count: ledgerCountReports, secs: ledgerTimeSecs, fmt: ledgerFmtTime, candidates: ledgerCandidates };
+window.LedgerReports = { clean: ledgerCleanReports, count: ledgerCountReports, secs: ledgerTimeSecs, fmt: ledgerFmtTime, candidates: ledgerCandidates, level: ledgerLevel, why: ledgerWhyText };
 
 document.addEventListener('DOMContentLoaded', () => {
     let currentPath = '';
@@ -1346,6 +1378,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 unconfirmedTeamReports: 0,
                 unconfirmedEnemyReports: 0,
                 reports: result.Reports || [],
+                possible: ledgerCleanReports(result.Possible, result.Players),
+                engine: String(result.Engine || ''),
                 scoreboardActivities: result.scoreboardActivities || [],
                 players: result.Players || [],
                 events: result.Events || [],
@@ -2288,6 +2322,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     unconfirmedTeamReports: unconfirmedTeamReports,
                     unconfirmedEnemyReports: unconfirmedEnemyReports,
                     reports: result.Reports || [],
+                    possible: ledgerCleanReports(result.Possible, result.Players),
+                    engine: String(result.Engine || ''),
                     scoreboardActivities: result.scoreboardActivities || [],
                     players: result.Players || [],
                     events: result.Events || [],
@@ -2969,22 +3005,39 @@ document.addEventListener('DOMContentLoaded', () => {
     function tlWho(x) { return (x.Name && String(x.Name).trim()) || (x.Hero && String(x.Hero).toLowerCase() !== 'unknown' ? x.Hero : '') || (x.Slot >= 0 ? tr('Slot') + ' ' + x.Slot : tr('Unknown player')); }
 
     // Clean list view of reports (replaces the minute-by-minute canvas chart).
-    function renderReportTimelineList(reports, dir) {
+    // reports: sure + likely; possible: behaviour-only guesses, shown apart and never counted.
+    function renderReportTimelineList(reports, dir, possible, md) {
         const C = timelineGraphContainer;
         const outgoing = dir === 'outgoing';
+        const ours = !!(md && /^dtparse/.test(md.engine || ''));
         C.innerHTML = '';
         C.classList.add('as-list');
-        const rows = [...reports].sort((a, b) => parseTimeToMinutes(a.Time) - parseTimeToMinutes(b.Time));
+        const bySecs = (a, b) => parseTimeToMinutes(a.Time) - parseTimeToMinutes(b.Time);
+        const rows = [...(reports || [])].sort(bySecs);
+        const poss = [...(possible || [])].sort(bySecs);
 
         const head = document.createElement('div');
         head.className = 'rep-head';
         head.innerHTML = '<span class="rep-head-t">' + escTL(tr(outgoing ? 'Reports the player made' : 'Reports on the player')) + '</span>' +
             '<span class="rep-head-c">' + rows.length + '</span>';
+        C.appendChild(head);
 
-        const list = document.createElement('div');
-        list.className = 'rep-list';
+        if (ours) {
+            const note = document.createElement('div');
+            note.className = 'rep-note';
+            note.innerHTML = '<p>' + escTL(tr('Dota no longer saves whom a player reported, so each report is worked out from what happened around it.')) + '</p>' +
+                '<ul>' +
+                '<li><span class="rep-lvl sure">' + escTL(tr('Sure')) + '</span><span>' + escTL(tr('the player said it in chat')) + '</span></li>' +
+                '<li><span class="rep-lvl likely">' + escTL(tr('Likely')) + '</span><span>' + escTL(tr('opened the scoreboard right after a death, flame or a call to report')) + '</span></li>' +
+                '<li><span class="rep-lvl possible">' + escTL(tr('Possible')) + '</span><span>' + escTL(tr('a long look at the scoreboard with the mouse moving, nothing else')) + '</span></li>' +
+                '</ul>';
+            C.appendChild(note);
+        }
 
-        rows.forEach((r) => {
+        const candName = (c) => (c.Name && String(c.Name).trim()) || (c.Hero && String(c.Hero).toLowerCase() !== 'unknown' ? c.Hero : '') || '?';
+        const LVL = { sure: 'Sure', likely: 'Likely', possible: 'Possible' };
+
+        const rowFor = (r) => {
             const ally = r.Team === 'FRIENDLY';
             let primary, hero, target, pl;
             if (outgoing) {
@@ -3002,50 +3055,101 @@ document.addEventListener('DOMContentLoaded', () => {
             const avInner = escTL((primary || '?').trim().charAt(0).toUpperCase())
                 + (iconUrl ? '<img src="' + escTL(iconUrl) + '" alt="" loading="lazy" data-drop="1">' : '');
 
-            // The engine could not pin this report down exactly: say so, and list who else it might be.
+            const level = ledgerLevel(r);
             const cands = ledgerCandidates(r);
-            const unsure = !!r._unsure || r.Confirmed === false || cands.length > 0;
-            const candName = (c) => (c.Name && String(c.Name).trim()) || (c.Hero && String(c.Hero).toLowerCase() !== 'unknown' ? c.Hero : '') || '?';
             // the candidate this row shows: the one on the displayed slot, else the engine's pick, else the top score
             const shown = cands.find(x => x.c.Slot != null && (x.c.Slot === r.TargetSlot || x.c.Slot === r.Slot))
-                || (Number.isInteger(r.SelectedCandidateIndex) && r.Candidates[r.SelectedCandidateIndex] ? cands.find(x => x.c === r.Candidates[r.SelectedCandidateIndex]) : null)
+                || (Number.isInteger(r.SelectedCandidateIndex) && Array.isArray(r.Candidates) && r.Candidates[r.SelectedCandidateIndex] ? cands.find(x => x.c === r.Candidates[r.SelectedCandidateIndex]) : null)
                 || cands[0];
-            let unsureTip = '';
-            if (cands.length) {
-                unsureTip = tr('Who it may be') + ':\n' + cands.map(x => (x === shown ? '★ ' : '• ') + candName(x.c) + ' — ' + Math.round(x.share * 100) + '%').join('\n');
-            } else if (unsure) {
-                unsureTip = tr('The replay does not show this report with certainty');
-            }
+            const others = cands.filter(x => x !== shown).slice(0, 2);
+            const why = (Array.isArray(r.Why) ? r.Why : []).map(ledgerWhyText).filter(Boolean);
             const sub = [];
             if (hero) sub.push(escTL(hero));
-            if (unsure) sub.push('<i class="rep-unsure">≈ ' + escTL(shown ? tr('likely') + ' ' + Math.round(shown.share * 100) + '%' : tr('not certain')) + '</i>');
+            if (!ours && level !== 'sure') sub.push('<i class="rep-unsure">≈ ' + escTL(shown ? tr('likely') + ' ' + Math.round(shown.share * 100) + '%' : tr('not certain')) + '</i>');
 
             const row = document.createElement('div');
-            row.className = 'rep-row ' + (ally ? 'ally' : 'enemy') + (unsure ? ' rep-unsure-row' : '');
+            row.className = 'rep-row ' + (ally ? 'ally' : 'enemy') + ' lvl-' + level + (level !== 'sure' ? ' rep-unsure-row' : '');
             if (pl && pl.id) { row.classList.add('rep-clickable'); row.dataset.sid = pl.id; }
-            if (unsureTip) row.title = unsureTip;
+            if (!ours && cands.length) row.title = tr('Who it may be') + ':\n' + cands.map(x => (x === shown ? '★ ' : '• ') + candName(x.c) + ' — ' + Math.round(x.share * 100) + '%').join('\n');
+            else if (!ours && level !== 'sure') row.title = tr('The replay does not show this report with certainty');
+            let detail = '';
+            if (why.length || others.length) {
+                detail = '<span class="rep-why">' +
+                    why.map(t => '<span>' + escTL(t) + '</span>').join('') +
+                    (others.length ? '<span class="rep-or"><em>' + escTL(tr('or')) + '</em> ' + others.map(x => '<b>' + escTL(candName(x.c)) + '</b>').join(', ') + '</span>' : '') +
+                    '</span>';
+            }
             row.innerHTML =
                 '<span class="rep-time">' + escTL(ledgerFmtTime(r.Time) || '—') + '</span>' +
                 '<span class="rep-av">' + avInner + '</span>' +
                 '<span class="rep-who"><b>' + escTL(primary) + '</b>' + (sub.length ? '<small>' + sub.join(' · ') + '</small>' : '') + '</span>' +
                 (target ? '<span class="rep-target">&rarr; ' + escTL(target) + '</span>' : '<span class="rep-target"></span>') +
-                '<span class="rep-tag ' + (ally ? 'ally' : 'enemy') + '">' + escTL(ally ? tr('Report from teammate') : tr('Report from enemy')) + '</span>';
-            list.appendChild(row);
-        });
+                '<span class="rep-tags">' + (ours ? '<span class="rep-lvl ' + level + '">' + escTL(tr(LVL[level])) + '</span>' : '') +
+                '<span class="rep-tag ' + (ally ? 'ally' : 'enemy') + '">' + escTL(ally ? tr('Report from teammate') : tr('Report from enemy')) + '</span></span>' +
+                detail;
+            return row;
+        };
 
-        list.addEventListener('click', (e) => {
+        const click = (e) => {
             const row = e.target.closest('.rep-clickable');
             if (row && row.dataset.sid) openSteamProfile(row.dataset.sid);
-        });
+        };
 
-        C.appendChild(head);
+        const list = document.createElement('div');
+        list.className = 'rep-list';
+        rows.forEach(r => list.appendChild(rowFor(r)));
+        if (!rows.length) {
+            const empty = document.createElement('p');
+            empty.className = 'graph-empty rep-empty';
+            empty.textContent = poss.length ? 'No sure or likely reports.' : (outgoing ? 'No reports found for the selected player.' : 'No reports found for this match.');
+            list.appendChild(empty);
+        }
+        list.addEventListener('click', click);
         C.appendChild(list);
+
+        if (poss.length) {
+            const box = document.createElement('details');
+            box.className = 'rep-poss';
+            if (!rows.length) box.open = true;
+            const sum = document.createElement('summary');
+            sum.innerHTML = '<span class="rep-head-t">' + escTL(tr('Possible reports')) + '</span>' +
+                '<span class="rep-poss-hint">' + escTL(tr('not counted in the totals')) + '</span>' +
+                '<span class="rep-head-c">' + poss.length + '</span>';
+            box.appendChild(sum);
+            const pl2 = document.createElement('div');
+            pl2.className = 'rep-list';
+            poss.forEach(r => pl2.appendChild(rowFor(r)));
+            pl2.addEventListener('click', click);
+            box.appendChild(pl2);
+            C.appendChild(box);
+        }
         hideGraphLoading();
+    }
+
+    // the "possible" reports that belong to the current view (incoming: on the player, outgoing: by the player)
+    function possibleFor(matchData, playerFilter, dir) {
+        const list = (matchData && Array.isArray(matchData.possible)) ? matchData.possible : [];
+        if (!list.length || !playerFilter) return list;
+        let slot = null, sid = '';
+        if (playerFilter.startsWith('slot_')) slot = parseInt(playerFilter.slice(5), 10);
+        else if (playerFilter.startsWith('steamid_')) {
+            sid = String(playerFilter.slice(8)).trim();
+            const p = (matchData.players || []).find(x => x && x.SteamID && steamIDsMatch(String(x.SteamID), sid));
+            if (p && p.Slot != null) slot = p.Slot;
+        }
+        const out = dir === 'outgoing';
+        return list.filter(r => {
+            const s = out ? r.Slot : r.TargetSlot, id = out ? r.SteamID : r.TargetSteamID;
+            if (slot != null && Number.isInteger(slot)) return s === slot;
+            return !!(sid && id && steamIDsMatch(String(id), sid));
+        });
     }
 
     function renderTimelineGraph(matchData, playerFilter = null) {
         timelineGraphContainer.classList.remove('as-list');
         if (!matchData || !matchData.reports || matchData.reports.length === 0) {
+            const poss0 = possibleFor(matchData, playerFilter, 'incoming');
+            if (matchData && (poss0.length || /^dtparse/.test(matchData.engine || ''))) { renderReportTimelineList([], 'incoming', poss0, matchData); return; }
             const timelineOverlay = timelineGraphContainer.querySelector('#graph-loading-overlay');
             if (timelineOverlay) {
                 timelineOverlay.remove();
@@ -3127,13 +3231,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (reports.length === 0) {
+        const possIn = possibleFor(matchData, playerFilter, 'incoming');
+        if (reports.length === 0 && !possIn.length && !/^dtparse/.test(matchData.engine || '')) {
             timelineGraphContainer.innerHTML = '<p class="graph-empty">No reports found for the selected player.</p>';
             hideGraphLoading();
             return;
         }
 
-        renderReportTimelineList(reports, 'incoming');
+        renderReportTimelineList(reports, 'incoming', possIn, matchData);
         return;
 
         /* eslint-disable no-unreachable */
@@ -3597,7 +3702,10 @@ document.addEventListener('DOMContentLoaded', () => {
         showGraphLoading();
         
         try {
+            const possOut = possibleFor(matchData, playerFilter, 'outgoing');
+            const oursOut = !!(matchData && /^dtparse/.test(matchData.engine || ''));
             if (!matchData || !matchData.reports || matchData.reports.length === 0) {
+                if (matchData && (possOut.length || oursOut)) { renderReportTimelineList([], 'outgoing', possOut, matchData); return; }
                 timelineGraphContainer.innerHTML = '<p class="graph-empty">No reports found for this match.</p>';
                 hideGraphLoading();
                 return;
@@ -3616,6 +3724,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
             if (reports.length === 0) {
+                if (possOut.length || oursOut) { renderReportTimelineList([], 'outgoing', possOut, matchData); return; }
                 timelineGraphContainer.innerHTML = '<p class="graph-empty">No reports found for the selected player.</p>';
                 hideGraphLoading();
                 return;
@@ -3686,7 +3795,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return updatedReport;
         });
 
-        renderReportTimelineList(reports, 'outgoing');
+        renderReportTimelineList(reports, 'outgoing', possOut, matchData);
         return;
 
         /* eslint-disable no-unreachable */
@@ -4439,6 +4548,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = document.createElement('h3');
         title.className = 'graph-title';
         title.textContent = 'Scoreboard Activity';
+        // our engine marks the visits that look like a report (gold frame)
+        const sbGold = (getComputedStyle(document.documentElement).getPropertyValue('--aegis') || '').trim() || '#e8b04a';
+        if (activities.some(a => (a.TimeRanges || []).some(r => Number(r.Chance) >= 30))) {
+            const leg = document.createElement('small');
+            leg.className = 'sb-legend';
+            leg.textContent = 'Gold frame: a visit that looks like a report';
+            title.appendChild(document.createTextNode(' '));
+            title.appendChild(leg);
+        }
         
         
         const canvas = document.createElement('canvas');
@@ -4560,6 +4678,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.strokeStyle = playerColor;
                     ctx.lineWidth = 2;
                     ctx.strokeRect(startX, y + 5, barWidth, rowHeight - 10);
+                    if (Number(range.Chance) >= 30) {
+                        ctx.save();
+                        ctx.strokeStyle = sbGold;
+                        ctx.lineWidth = 2;
+                        if (Number(range.Chance) < 45) ctx.setLineDash([3, 2]);
+                        ctx.strokeRect(startX - 3, y + 2, Math.max(barWidth, 2) + 6, rowHeight - 4);
+                        ctx.restore();
+                    }
                 });
 
                 ctx.fillStyle = T.text;

@@ -27,7 +27,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "if(Test-Path (Join-Path $root 'assets')){ Copy-Item (Join-Path $root 'assets') $e -Recurse -Force };" ^
   "Remove-Item $z,$d -Recurse -Force;" ^
   "$b='https://raw.githubusercontent.com/m4ks1em-maker/ledger---Dota-Report-FInder/engine/';" ^
-  "foreach($n in 'server.exe','bot.exe'){ Invoke-WebRequest ($b+$n) -OutFile (Join-Path $e $n) };" ^
+  "foreach($n in 'server.exe','bot.exe','dtparse.exe'){ Invoke-WebRequest ($b+$n) -OutFile (Join-Path $e $n) };" ^
   "Set-Content (Join-Path $e 'engine-rev.txt') '2' -NoNewline; Write-Host '  Engine installed (parser manta 1.5.1).'"
 if errorlevel 1 (
   echo.

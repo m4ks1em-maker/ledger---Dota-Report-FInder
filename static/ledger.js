@@ -1005,7 +1005,10 @@
         roshan: ['rosh', (e) => { const tn = teamName(e.Team); return tn ? tn + ' ' + T('killed Roshan') : T('Roshan killed'); }],
         courier: ['courier', (e) => { const tn = teamName(e.Team); return (tn ? tn + ': ' : '') + T('courier killed') + (e.TargetName || e.TargetHero ? ' (' + (e.TargetName || e.TargetHero) + ')' : ''); }],
         disconnect: ['plug', (e) => who(e) + ' ' + T('disconnected')],
-        glyph: ['shield', (e) => who(e) + ' ' + T('used the glyph')],
+        // our engine knows the team that used the glyph, not the player
+        glyph: ['shield', (e) => (e.Slot >= 0 || !teamName(e.Team) ? who(e) + ' ' + T('used the glyph') : teamName(e.Team) + ': ' + T('glyph used'))],
+        aegis: ['shield', (e) => who(e) + ' ' + T('picked up the Aegis')],
+        reconnect: ['play', (e) => who(e) + ' ' + T('reconnected')],
         pause: ['pause', (e) => who(e) + ' ' + T('paused the game')],
         unpause: ['play', (e) => who(e) + ' ' + T('unpaused')]
     };

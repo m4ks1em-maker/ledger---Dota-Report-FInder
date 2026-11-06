@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.24.0",
-  "engineRev": "5",
-  "releaseNotes": "New: your profile. Click your name in the top right: Steam identity, your subscription with days left, key and computers, your numbers (reports on you, reports you made, clean matches, who reports you most) and 14 achievements. New: your hero behind the match verdict, animated, tinted green for a win and red for a loss, with your K/D/A, and a light parallax as you move the mouse.",
-  "releaseNotesRu": "Новое: личный профиль. Нажми на свой ник справа сверху: Steam, подписка с остатком дней, ключ и компьютеры, твои цифры (репорты на тебя, твои репорты, чистые матчи, кто чаще всех тебя репортит) и 14 достижений. Новое: твой герой за вердиктом матча, анимированный, зелёный при победе и красный при поражении, с твоим K/D/A и лёгким параллаксом за мышкой.",
+  "version": "2.25.0",
+  "engineRev": "6",
+  "releaseNotes": "New replay engine, written for DotaTraker from scratch. Dota stopped saving the mouse while the scoreboard is open, so the old engine found almost no reports. The new one works them out from what happened around each scoreboard look: Sure when the player said it in chat, Likely when they opened the scoreboard right after a death, flame or a call to report, and Possible reports in their own list. Every report shows why. Also: ward owners, correct times with pauses, Roshan, Aegis and courier kills in moments, glyphs by team, no fake disconnects after the game. Replays read in 1-2 seconds and are cached.",
+  "releaseNotesRu": "Новый движок разбора реплеев, написан для DotaTraker с нуля. Дота перестала сохранять мышку, пока открыта таблица, поэтому старый движок почти не находил репорты. Новый вычисляет их по тому, что было вокруг: «Точно», если игрок сам написал в чат, «Вероятно», если открыл таблицу сразу после смерти, флейма или просьбы зарепортить, и отдельный список «Возможные». У каждого репорта написано, почему. Ещё: владельцы вардов, верное время с паузами, Рошан, Аегис и курьеры в моментах, глиф по командам, нет фальшивых дисконнектов после игры. Реплей читается за 1–2 секунды и кэшируется.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",
