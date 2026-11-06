@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.23.3",
+  "version": "2.24.0",
   "engineRev": "5",
-  "releaseNotes": "Match map fixes: the map clock now ends with the match (wards planted late no longer stretch a 24:48 game to 30:12), the kill score on the map is no longer swapped between Radiant and Dire and ends on the official score, the Ancient falling is labelled as such instead of \"Tower down\". Times before 0:00 show as -01:30 everywhere and count in the 0-9 minute bar, and \"Reports per match\" is ordered by the day the match was played.",
-  "releaseNotesRu": "Карта матча: часы на карте теперь заканчиваются вместе с матчем (варды, поставленные под конец, больше не растягивают игру 24:48 до 30:12), счёт киллов на карте больше не перепутан между Светом и Тьмой и в конце совпадает с официальным, падение трона подписано как «Трон разрушен», а не «Башня пала». Время до 0:00 везде показывается как -01:30 и попадает в столбик 0–9 минут, а «Репорты по матчам» идут по дате самого матча.",
+  "releaseNotes": "New: your profile. Click your name in the top right: Steam identity, your subscription with days left, key and computers, your numbers (reports on you, reports you made, clean matches, who reports you most) and 14 achievements. New: your hero behind the match verdict, animated, tinted green for a win and red for a loss, with your K/D/A, and a light parallax as you move the mouse.",
+  "releaseNotesRu": "Новое: личный профиль. Нажми на свой ник справа сверху: Steam, подписка с остатком дней, ключ и компьютеры, твои цифры (репорты на тебя, твои репорты, чистые матчи, кто чаще всех тебя репортит) и 14 достижений. Новое: твой герой за вердиктом матча, анимированный, зелёный при победе и красный при поражении, с твоим K/D/A и лёгким параллаксом за мышкой.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

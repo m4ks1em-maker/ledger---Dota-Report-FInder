@@ -148,8 +148,22 @@ const DOTA_HEROES = [
     { id: 'marci', name: 'Marci', localized_name: 'Marci' },
     { id: 'primal_beast', name: 'Primal Beast', localized_name: 'Primal Beast' },
     { id: 'muerta', name: 'Muerta', localized_name: 'Muerta' },
-    { id: 'ringmaster', name: 'Ringmaster', localized_name: 'Ringmaster' }
+    { id: 'ringmaster', name: 'Ringmaster', localized_name: 'Ringmaster' },
+    { id: 'largo', name: 'Largo', localized_name: 'Largo' }
 ];
+
+// Hero for the big art: the engine's or OpenDota's hero name -> { npc (Valve CDN name), name }
+function ledgerHeroInfo(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    if (!s || /^unknown$/i.test(s)) return null;
+    const norm = s.replace(/^npc_dota_hero_/, '').replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase().replace(/\s+/g, '_');
+    const alias = { zuus: 'zeus', anti_mage: 'antimage', vengeful_spirit: 'vengefulspirit', queen_of_pain: 'queenofpain' };
+    const id = alias[norm] || norm;
+    const h = DOTA_HEROES.find((x) => x.id === id || x.name.toLowerCase().replace(/[^a-z]/g, '') === id.replace(/[^a-z]/g, ''));
+    if (!h) return null;
+    return { npc: h.id === 'zeus' ? 'zuus' : h.id, name: h.localized_name };
+}
 
     function convertSteamIDTo64(steamID) {
         if (!steamID) return null;
@@ -2384,6 +2398,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let analysisSteamID = null;
     let playerReportsPerMatchChart = null;
     let currentSelectedPlayer = null;
+    // the player picked in the report view, for the verdict art and the profile ('slot_N' or 'steamid_X')
+    Object.defineProperty(window, 'ledgerSelectedPlayer', { configurable: true, get: () => currentSelectedPlayer });
     let allConfirmedPlayerReportCounts = new Map();
     let allUnconfirmedPlayerReportCounts = new Map();
     let allConfirmedTimelineData = [];
@@ -5262,6 +5278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 totals.totalUnconfirmedTeamReports, totals.totalUnconfirmedEnemyReports, playerFilter);
         }
         
+        try { document.dispatchEvent(new CustomEvent('ledger:player')); } catch (_) {}
         if (allMatchDataOriginal.length > 1 && (currentSelectedPlayer || analysisSteamID)) {
             updatePlayerReportsPerMatchGraph(currentSelectedPlayer);
         } else {

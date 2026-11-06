@@ -913,7 +913,8 @@ async function odApi(req, res, url, pathname) {
                 goldAdv: goldAdv,
                 xpAdv: xpAdv,
                 objectives: objectives,
-                deaths: deaths
+                deaths: deaths,
+                players: await odMatchPlayers(m)
             }, { 'Cache-Control': 'private, max-age=86400' });
         } catch (_) { return sendJson(res, 502, { error: 'OpenDota did not answer. Try again in a minute.' }); }
     }
@@ -937,6 +938,13 @@ async function odApi(req, res, url, pathname) {
             return sendJson(res, 200, { jobId: jid, done: done });
         } catch (_) { return sendJson(res, 200, { jobId: jid, done: false }); }
     }
+    if (pathname === '/_ledger/od/heroart' && (req.method === 'GET' || req.method === 'HEAD')) {
+        const h = String(url.searchParams.get('h') || '').toLowerCase();
+        const k = url.searchParams.get('k') === 'png' ? 'png' : 'webm';
+        if (!/^[a-z0-9_]{1,40}$/.test(h)) { res.writeHead(400); return res.end(); }
+        try { return sendMedia(req, res, await heroArtFile(h, k), k === 'png' ? 'image/png' : 'video/webm'); }
+        catch (_) { if (!res.headersSent) { res.writeHead(404); } return res.end(); }
+    }
     if (pathname === '/_ledger/od/heroimg' && (req.method === 'GET' || req.method === 'HEAD')) {
         const h = String(url.searchParams.get('h') || '').toLowerCase();
         if (!/^[a-z0-9_]{1,40}$/.test(h)) { res.writeHead(400); return res.end(); }
@@ -947,6 +955,68 @@ async function odApi(req, res, url, pathname) {
         } catch (_) { res.writeHead(404); return res.end(); }
     }
     return sendJson(res, 404, { error: 'Not found' });
+}
+
+// Who played what in an OpenDota match: hero (as the CDN names it), K/D/A and the result per player.
+async function odMatchPlayers(m) {
+    if (!m || !Array.isArray(m.players)) return null;
+    const byId = {};
+    try { (await heroList()).forEach((h) => { byId[h.id] = h.short; }); } catch (_) {}
+    return m.players.slice(0, 10).map((p) => ({
+        slot: p.player_slot, account: p.account_id != null ? String(p.account_id) : null,
+        heroId: p.hero_id, hero: byId[p.hero_id] || null, name: p.personaname ? String(p.personaname).slice(0, 40) : null,
+        k: p.kills, d: p.deaths, a: p.assists,
+        win: typeof p.win === 'number' ? p.win === 1 : (typeof m.radiant_win === 'boolean' && p.player_slot != null ? (p.player_slot < 128) === m.radiant_win : null)
+    }));
+}
+
+/* ------------------------------------------------------- hero art (cached) */
+// Animated hero renders from Valve's CDN (webm with transparency, png as the still frame). The page
+// runs under a strict CSP, so they are served from here, and kept on disk after the first download.
+const HERO_ART_DIR = path.join(DATA_DIR, 'heroart');
+const HERO_ART_MAX = 300 * 1024 * 1024;
+const heroArtJobs = new Map();
+function heroArtFile(h, ext) {
+    const file = path.join(HERO_ART_DIR, h + '.' + ext);
+    try { if (fs.statSync(file).size > 0) { fs.utimes(file, new Date(), new Date(), () => {}); return Promise.resolve(file); } } catch (_) {}
+    if (heroArtJobs.has(file)) return heroArtJobs.get(file);
+    const job = (async () => {
+        fs.mkdirSync(HERO_ART_DIR, { recursive: true });
+        const buf = await fetchBuf(`https://cdn.cloudflare.steamstatic.com/apps/dota2/videos/dota_react/heroes/renders/${h}.${ext}`, { timeout: 90000, max: 32 * 1024 * 1024 });
+        const magic = buf.length > 4 ? buf.readUInt32BE(0) : 0;
+        if (ext === 'png' ? magic !== 0x89504e47 : magic !== 0x1a45dfa3) throw new Error('not a hero render');
+        writeFileAtomic(file, buf);
+        trimHeroArt();
+        return file;
+    })().finally(() => heroArtJobs.delete(file));
+    heroArtJobs.set(file, job);
+    return job;
+}
+function trimHeroArt() {
+    try {
+        const list = fs.readdirSync(HERO_ART_DIR).filter((f) => /\.(webm|png)$/.test(f)).map((f) => { const st = fs.statSync(path.join(HERO_ART_DIR, f)); return { f, size: st.size, t: st.mtimeMs }; });
+        let total = list.reduce((a, x) => a + x.size, 0);
+        list.sort((a, b) => a.t - b.t);
+        while (total > HERO_ART_MAX && list.length > 2) { const x = list.shift(); total -= x.size; try { fs.rmSync(path.join(HERO_ART_DIR, x.f), { force: true }); } catch (_) {} }
+    } catch (_) {}
+}
+// file with Range support, so the browser can stream and loop a video
+function sendMedia(req, res, file, type) {
+    const size = fs.statSync(file).size;
+    const headers = { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Cache-Control': 'private, max-age=2592000' };
+    const r = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || ''));
+    if (r && (r[1] || r[2])) {
+        let start, end;
+        if (r[1]) { start = Number(r[1]); end = r[2] ? Math.min(Number(r[2]), size - 1) : size - 1; }
+        else { start = Math.max(0, size - Number(r[2])); end = size - 1; }
+        if (!(start >= 0 && start < size && end >= start)) { res.writeHead(416, { 'Content-Range': `bytes */${size}` }); return res.end(); }
+        res.writeHead(206, Object.assign(headers, { 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': end - start + 1 }));
+        if (req.method === 'HEAD') return res.end();
+        return fs.createReadStream(file, { start, end }).on('error', () => res.destroy()).pipe(res);
+    }
+    res.writeHead(200, Object.assign(headers, { 'Content-Length': size }));
+    if (req.method === 'HEAD') return res.end();
+    fs.createReadStream(file).on('error', () => res.destroy()).pipe(res);
 }
 
 /* --------------------------------------------------- auto-sync of matches */
@@ -1263,6 +1333,7 @@ function meView() {
     return {
         label: l.label || '', tail: l.tail || '', status: l.status || '', expiresAt: l.expiresAt || null,
         activatedAt: l.activatedAt || null, maxDevices: l.maxDevices || 1, devices: l.devices || 1,
+        durationDays: l.durationDays != null ? l.durationDays : null, tier: l.tier || '', role: l.role || '',
         offline: !!lic.offline, lastOk: lic.lastOk || 0, telegram: TELEGRAM, github: GITHUB, version: VERSION, serverTime: srvNow(),
         steam: steamView(), update: updateView(), engine: { rev: engineRevNow(), want: ENGINE_REV }
     };

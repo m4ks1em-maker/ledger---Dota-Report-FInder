@@ -408,7 +408,9 @@
                 const base = String(m.filePath || '').split('/').pop().replace(/\.dem$/, '');
                 hist[id] = {
                     a: Date.now(), d: (hist[id] && hist[id].od && hist[id].d) || dates[base] || (hist[id] && hist[id].d) || null, od: (hist[id] && hist[id].od) || 0,
-                    r: (m.reports || []).map((r) => [r.Time, r.Slot, String(r.SteamID || ''), r.Name || '', r.Hero || '', r.Team === 'FRIENDLY' ? 1 : 0, String(r.TargetSteamID || ''), r.TargetName || '', r.TargetHero || '', r.Confirmed === false ? 0 : 1])
+                    r: (m.reports || []).map((r) => [r.Time, r.Slot, String(r.SteamID || ''), r.Name || '', r.Hero || '', r.Team === 'FRIENDLY' ? 1 : 0, String(r.TargetSteamID || ''), r.TargetName || '', r.TargetHero || '', r.Confirmed === false ? 0 : 1]),
+                    // roster [steamId64, hero, slot, team]: lets the profile find your hero and your matches
+                    p: (m.players || []).slice(0, 10).map((p) => [(window.ledgerSid ? window.ledgerSid(p.SteamID) : String(p.SteamID || '')), p.Hero || '', p.Slot, p.Team])
                 };
                 // fill target names/heroes from the roster when the report did not carry them
                 const roster = {}; (m.players || []).forEach((p) => { roster[p.Slot] = p; });
@@ -721,7 +723,8 @@
             if (!chip) {
                 const wrap = document.createElement('div'); wrap.className = 'account';
                 chip = document.createElement('button'); chip.type = 'button'; chip.className = 'account-chip'; chip.setAttribute('aria-haspopup', 'dialog'); chip.setAttribute('aria-expanded', 'false');
-                chip.addEventListener('click', openPop);
+                // the chip opens the full profile (the small pop-up is the fallback)
+                chip.addEventListener('click', () => { if (window.LedgerProfile) window.LedgerProfile.open(); else openPop(); });
                 wrap.appendChild(chip);
                 bar.appendChild(wrap);
             }
@@ -1418,6 +1421,127 @@
     render();
 })();
 
+/* ---------- Verdict hero art: your hero, animated, behind the verdict ---------- */
+// Whose hero: the player picked in the report view, else the Steam ID the replays were analysed for,
+// else the linked Steam account, else the most reported player of the match. The art is Valve's animated
+// render (cached by the gate), tinted by the result: Radiant green for a win, Dire red for a loss.
+(function verdictHero() {
+    const box = document.getElementById('match-verdict');
+    const select = document.getElementById('match-selector');
+    if (!box) return;
+    const T = (x) => (window.LedgerI18n ? window.LedgerI18n.t(x) : x);
+    const reduced = () => !!(window.LedgerUI && LedgerUI.reduced && LedgerUI.reduced());
+    const BASE = 76561197960265728n;
+    const sid64 = (v) => { try { const s = String(v || '').trim(); const m = /^\[?U:1:(\d+)\]?$/i.exec(s); let n = m ? BigInt(m[1]) : (/^\d{1,20}$/.test(s) ? BigInt(s) : 0n); if (!n) return ''; if (n < BASE) n += BASE; return n.toString(); } catch (_) { return ''; } };
+
+    const art = document.createElement('div');
+    art.className = 'mv-art'; art.setAttribute('aria-hidden', 'true');
+    art.innerHTML = '<div class="mv-art-glow"></div><div class="mv-art-fig"><img class="mv-art-img" alt="" decoding="async"><video class="mv-art-vid" muted loop playsinline preload="none"></video></div><div class="mv-art-shade"></div><div class="mv-art-name"></div>';
+    box.insertBefore(art, box.firstChild);
+    const fig = art.querySelector('.mv-art-fig'), img = art.querySelector('.mv-art-img'), vid = art.querySelector('.mv-art-vid'), nameEl = art.querySelector('.mv-art-name');
+    const tag = document.createElement('div'); tag.className = 'mv-hero-tag hidden';
+    const text = box.querySelector('.mv-text'); const share = document.getElementById('mv-share');
+    if (text) text.insertBefore(tag, share || null);
+
+    let linkedSteam = '', shownNpc = null, visible = false;
+    fetch('/_ledger/me', { credentials: 'same-origin', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((m) => { linkedSteam = (m && m.steam && sid64(m.steam.id)) || ''; paint(); }).catch(() => {});
+
+    function currentMatch() {
+        const list = window.ledgerMatches || [];
+        if (!list.length) return null;
+        const idx = select && select.value !== '' ? Number(select.value) : 0;
+        return list[idx] || list[0];
+    }
+    function pickPlayer(m) {
+        const players = (m && m.players) || [];
+        if (!players.length) return null;
+        const bySid = (sid) => sid ? players.find((p) => sid64(p.SteamID) === sid) : null;
+        const sel = window.ledgerSelectedPlayer;
+        if (sel && /^slot_\d+$/.test(sel)) { const p = players.find((x) => x.Slot === Number(sel.slice(5))); if (p) return p; }
+        if (sel && /^steamid_/.test(sel)) { const p = bySid(sid64(sel.slice(8))); if (p) return p; }
+        const input = document.getElementById('steam-id');
+        const p1 = bySid(sid64(input && input.value)); if (p1) return p1;
+        const p2 = bySid(linkedSteam); if (p2) return p2;
+        // nobody of ours in this match: the hero everybody reported
+        const got = {}; (m.reports || []).forEach((r) => { if (r.TargetSlot != null) got[r.TargetSlot] = (got[r.TargetSlot] || 0) + 1; });
+        const top = Object.keys(got).sort((a, b) => got[b] - got[a])[0];
+        return top != null ? players.find((x) => x.Slot === Number(top)) || null : null;
+    }
+    function odPlayer(m, p) {
+        const od = window.ledgerOD;
+        if (!od || !m || String(od.matchId) !== String(m.matchID) || !Array.isArray(od.players)) return null;
+        const acc = sid64(p.SteamID) ? (BigInt(sid64(p.SteamID)) - BASE).toString() : '';
+        const slot = p.Slot < 5 ? p.Slot : 128 + p.Slot - 5;
+        return od.players.find((x) => acc && x.account === acc) || od.players.find((x) => x.slot === slot) || null;
+    }
+
+    function setArt(npc) {
+        if (npc === shownNpc) return;
+        shownNpc = npc;
+        fig.classList.remove('ready', 'vid-on');
+        vid.pause(); vid.removeAttribute('src'); vid.load();
+        if (!npc) { img.removeAttribute('src'); return; }
+        img.onload = () => { if (shownNpc === npc) fig.classList.add('ready'); };
+        img.onerror = () => { if (shownNpc === npc) { box.classList.remove('has-art'); } };
+        img.src = '/_ledger/od/heroart?k=png&h=' + encodeURIComponent(npc);
+        if (!reduced()) {
+            vid.src = '/_ledger/od/heroart?k=webm&h=' + encodeURIComponent(npc);
+            vid.oncanplay = () => { if (shownNpc !== npc) return; fig.classList.add('ready', 'vid-on'); if (visible) vid.play().catch(() => {}); };
+            vid.onerror = () => fig.classList.remove('vid-on');
+            vid.preload = 'auto'; vid.load();
+        }
+    }
+
+    function paint() {
+        const m = currentMatch();
+        const p = m ? pickPlayer(m) : null;
+        const od = p ? odPlayer(m, p) : null;
+        const info = (od && od.hero && window.ledgerHeroInfo && ledgerHeroInfo(od.hero)) || (p && window.ledgerHeroInfo && ledgerHeroInfo(p.Hero)) || null;
+        box.classList.toggle('has-art', !!info);
+        let win = od && typeof od.win === 'boolean' ? od.win : null;
+        if (win == null && p && window.ledgerOD && m && String(window.ledgerOD.matchId) === String(m.matchID) && typeof window.ledgerOD.radiantWin === 'boolean') {
+            const radiant = p.Team === 2 || (p.Team == null && p.Slot < 5);
+            win = radiant === window.ledgerOD.radiantWin;
+        }
+        box.classList.toggle('mv-win', win === true);
+        box.classList.toggle('mv-loss', win === false);
+        setArt(info ? info.npc : null);
+        nameEl.textContent = info ? info.name : '';
+        if (!info) { tag.classList.add('hidden'); return; }
+        tag.textContent = '';
+        const ic = document.createElement('img'); ic.alt = ''; ic.src = '/_ledger/od/heroimg?h=' + encodeURIComponent(info.npc); ic.setAttribute('data-drop', '1');
+        const who = document.createElement('b'); who.textContent = (p && p.Name) ? p.Name : info.name;
+        tag.append(ic, who);
+        if (od && od.k != null) { const k = document.createElement('span'); k.className = 'kda'; k.textContent = od.k + ' / ' + od.d + ' / ' + od.a; tag.appendChild(k); }
+        if (win != null) { const r = document.createElement('span'); r.className = 'res ' + (win ? 'win' : 'loss'); r.textContent = T(win ? 'Win' : 'Loss'); tag.appendChild(r); }
+        tag.classList.remove('hidden');
+    }
+
+    // parallax: the hero drifts against the pointer and a little with the scroll
+    let tx = 0, ty = 0, cx = 0, cy = 0, sy = 0, raf = 0;
+    function frame() {
+        raf = 0;
+        cx += (tx - cx) * 0.12; cy += (ty - cy) * 0.12;
+        box.style.setProperty('--px', cx.toFixed(3)); box.style.setProperty('--py', cy.toFixed(3)); box.style.setProperty('--sy', sy.toFixed(3));
+        if (Math.abs(tx - cx) > 0.002 || Math.abs(ty - cy) > 0.002) raf = requestAnimationFrame(frame);
+    }
+    const kick = () => { if (!raf && !reduced()) raf = requestAnimationFrame(frame); };
+    box.addEventListener('pointermove', (e) => { const r = box.getBoundingClientRect(); tx = ((e.clientX - r.left) / r.width) * 2 - 1; ty = ((e.clientY - r.top) / r.height) * 2 - 1; kick(); });
+    box.addEventListener('pointerleave', () => { tx = 0; ty = 0; kick(); });
+    window.addEventListener('scroll', () => { if (!box.classList.contains('has-art')) return; const r = box.getBoundingClientRect(); sy = Math.max(-1, Math.min(1, (r.top + r.height / 2 - innerHeight / 2) / innerHeight)); kick(); }, { passive: true });
+    // play only while the card is on screen
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver((es) => { visible = es.some((e) => e.isIntersecting); if (visible && fig.classList.contains('vid-on')) vid.play().catch(() => {}); else vid.pause(); }).observe(box);
+    } else visible = true;
+
+    document.addEventListener('ledger:matches', paint);
+    document.addEventListener('ledger:od', paint);
+    document.addEventListener('ledger:player', paint);
+    document.addEventListener('ledger:lang', paint);
+    if (select) select.addEventListener('change', paint);
+    paint();
+})();
+
 /* ---------- Match stat tiles: duration (from replay) + winner / score / date (OpenDota) ---------- */
 (function matchStats() {
     const box = document.getElementById('match-stats');
@@ -1667,7 +1791,7 @@
                 if (j.radiantScore != null && j.direScore != null) scoreEl.textContent = j.radiantScore + ' — ' + j.direScore;
                 if (j.startTime) { try { dateEl.textContent = new Date(j.startTime * 1000).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' }); } catch (_) {} }
                 mfShow(j);
-                window.ledgerOD = { matchId: id, duration: j.duration, objectives: j.objectives || null, deaths: j.deaths || null, radiantScore: j.radiantScore, direScore: j.direScore, startTime: j.startTime || null };
+                window.ledgerOD = { matchId: id, duration: j.duration, objectives: j.objectives || null, deaths: j.deaths || null, radiantScore: j.radiantScore, direScore: j.direScore, startTime: j.startTime || null, radiantWin: typeof j.radiantWin === 'boolean' ? j.radiantWin : null, players: Array.isArray(j.players) ? j.players : null };
                 try { document.dispatchEvent(new CustomEvent('ledger:od')); } catch (_) {}
             }).catch(() => {});
     }
