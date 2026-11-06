@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.23.2",
+  "version": "2.23.3",
   "engineRev": "5",
-  "releaseNotes": "Stability and timing fixes: the app no longer hangs when the replay engine crashes mid-answer (analysis, downloads, auto-sync), one stuck replay can no longer freeze the whole analysis, days left and key expiry follow the key server's clock instead of the PC clock, chat no longer skips messages written right before yours and no longer reloads the page in a loop, Russian toxic messages are detected again, times before 0:00 sort correctly, the Steam status check no longer floods the engine, and a crash restarts DotaTraker instead of closing it.",
-  "releaseNotesRu": "Стабильность и тайминги: приложение больше не зависает, если движок падает посреди ответа (анализ, загрузки, автосинк), один зависший реплей больше не стопорит весь анализ, дни ключа и срок считаются по часам сервера, а не ПК, чат больше не теряет сообщения, написанные прямо перед твоим, и не перезагружает страницу по кругу, русский токсик снова подсвечивается, время до 0:00 сортируется правильно, проверка Steam больше не долбит движок, а при сбое DotaTraker перезапускается сам, а не закрывается.",
+  "releaseNotes": "Match map fixes: the map clock now ends with the match (wards planted late no longer stretch a 24:48 game to 30:12), the kill score on the map is no longer swapped between Radiant and Dire and ends on the official score, the Ancient falling is labelled as such instead of \"Tower down\". Times before 0:00 show as -01:30 everywhere and count in the 0-9 minute bar, and \"Reports per match\" is ordered by the day the match was played.",
+  "releaseNotesRu": "Карта матча: часы на карте теперь заканчиваются вместе с матчем (варды, поставленные под конец, больше не растягивают игру 24:48 до 30:12), счёт киллов на карте больше не перепутан между Светом и Тьмой и в конце совпадает с официальным, падение трона подписано как «Трон разрушен», а не «Башня пала». Время до 0:00 везде показывается как -01:30 и попадает в столбик 0–9 минут, а «Репорты по матчам» идут по дате самого матча.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

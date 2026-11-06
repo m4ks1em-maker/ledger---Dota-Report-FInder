@@ -226,6 +226,7 @@
         "Fell": "Пала",
         "Tower": "Башня",
         "Ancient": "Трон",
+        "Ancient destroyed": "Трон разрушен",
         "Top lane": "Верх",
         "Mid lane": "Центр",
         "Bot lane": "Низ",

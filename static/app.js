@@ -278,6 +278,14 @@ function ledgerTimeSecs(t) {
     const v = parts.reduce((acc, p) => acc * 60 + p, 0);
     return neg ? -v : v;
 }
+// display form of an engine time: "-1:-30" -> "-01:30" (other values are shown as the engine wrote them)
+function ledgerFmtTime(t) {
+    if (t == null || t === '') return '';
+    const s = String(t);
+    if (s.indexOf('-') < 0) return s;
+    const a = Math.abs(ledgerTimeSecs(s));
+    return '-' + String(Math.floor(a / 60)).padStart(2, '0') + ':' + String(Math.floor(a % 60)).padStart(2, '0');
+}
 function ledgerSlot(v) {
     const n = typeof v === 'string' && /^\s*\d+\s*$/.test(v) ? parseInt(v, 10) : v;
     return Number.isInteger(n) && n >= 0 && n < 10 ? n : null;
@@ -352,7 +360,7 @@ function ledgerCountReports(reports) {
     (reports || []).forEach(r => { if (r.Team === 'FRIENDLY') team++; else enemy++; if (r._unsure) unsure++; });
     return { team, enemy, unsure, total: team + enemy };
 }
-window.LedgerReports = { clean: ledgerCleanReports, count: ledgerCountReports, secs: ledgerTimeSecs, candidates: ledgerCandidates };
+window.LedgerReports = { clean: ledgerCleanReports, count: ledgerCountReports, secs: ledgerTimeSecs, fmt: ledgerFmtTime, candidates: ledgerCandidates };
 
 document.addEventListener('DOMContentLoaded', () => {
     let currentPath = '';
@@ -3001,7 +3009,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pl && pl.id) { row.classList.add('rep-clickable'); row.dataset.sid = pl.id; }
             if (unsureTip) row.title = unsureTip;
             row.innerHTML =
-                '<span class="rep-time">' + escTL(r.Time || '—') + '</span>' +
+                '<span class="rep-time">' + escTL(ledgerFmtTime(r.Time) || '—') + '</span>' +
                 '<span class="rep-av">' + avInner + '</span>' +
                 '<span class="rep-who"><b>' + escTL(primary) + '</b>' + (sub.length ? '<small>' + sub.join(' · ') + '</small>' : '') + '</span>' +
                 (target ? '<span class="rep-target">&rarr; ' + escTL(target) + '</span>' : '<span class="rep-target"></span>') +

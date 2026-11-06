@@ -132,7 +132,7 @@
                 return n > 0n ? n.toString() : null;
             } catch (_) { return null; }
         };
-        const mins = (t) => { const p = String(t || '').split(':').map((x) => parseInt(x, 10) || 0); return p.length === 3 ? p[0] * 60 + p[1] + p[2] / 60 : p[0] + (p[1] || 0) / 60; };
+        const tshow = (t) => (window.LedgerReports && window.LedgerReports.fmt ? window.LedgerReports.fmt(t) : String(t == null ? '' : t));
 
         let saved = [], selected = null, current = null;
         try { saved = JSON.parse(localStorage.getItem(KEY) || '[]').filter((x) => x && acc(x.id)); selected = localStorage.getItem(KEY + 'Sel'); } catch (_) {}
@@ -192,7 +192,7 @@
                     host.appendChild(box);
                 }
                 const row = el('div', 'pl-row');
-                row.appendChild(el('span', 'pl-time', r.time));
+                row.appendChild(el('span', 'pl-time', tshow(r.time)));
                 const who = el('span', 'pl-who');
                 who.appendChild(el('b', null, r.name));
                 if (r.hero) who.appendChild(el('small', null, r.hero));
@@ -407,7 +407,7 @@
                 const id = String(m.matchID);
                 const base = String(m.filePath || '').split('/').pop().replace(/\.dem$/, '');
                 hist[id] = {
-                    a: Date.now(), d: dates[base] || (hist[id] && hist[id].d) || null,
+                    a: Date.now(), d: (hist[id] && hist[id].od && hist[id].d) || dates[base] || (hist[id] && hist[id].d) || null, od: (hist[id] && hist[id].od) || 0,
                     r: (m.reports || []).map((r) => [r.Time, r.Slot, String(r.SteamID || ''), r.Name || '', r.Hero || '', r.Team === 'FRIENDLY' ? 1 : 0, String(r.TargetSteamID || ''), r.TargetName || '', r.TargetHero || '', r.Confirmed === false ? 0 : 1])
                 };
                 // fill target names/heroes from the roster when the report did not carry them
@@ -416,7 +416,7 @@
             });
             save();
         }
-        const mins = (t) => { const p = String(t || '').split(':').map((x) => parseInt(x, 10) || 0); return p.length === 3 ? p[0] * 60 + p[1] : p[0] + (p[1] || 0) / 60; };
+        const mins = (t) => (window.LedgerReports ? window.LedgerReports.secs(t) : 0) / 60;
 
         function list(host, rows, max) {
             host.textContent = '';
@@ -458,7 +458,7 @@
                 if (rows.length) withRep++;
                 rows.forEach((r) => {
                     total++; if (r[5]) mate++;
-                    minute[Math.min(9, Math.floor(mins(r[0]) / 10))]++;
+                    minute[Math.max(0, Math.min(9, Math.floor(mins(r[0]) / 10)))]++;   // a report before 0:00 counts in 0–9 instead of being lost
                     const tkey = r[6] || r[7]; if (tkey) bump(got, tkey, r[7] || ('…' + String(r[6]).slice(-6)), r[8], id);
                     const rkey = r[2] || r[3]; if (rkey) bump(gave, rkey, r[3] || ('…' + String(r[2]).slice(-6)), r[4], id);
                     if (r[8]) bump(hero, r[8], r[8], '', id);
@@ -480,6 +480,15 @@
         $('st-clear').addEventListener('click', () => { hist = {}; try { localStorage.removeItem(KEY); } catch (_) {} render(); });
         document.addEventListener('ledger:matches', () => { ingest(); render(); });
         document.addEventListener('ledger:lang', render);
+        // "Reports per match" is ordered by date: use the day the match was played once OpenDota tells us,
+        // not the day the replay file was saved or analysed
+        document.addEventListener('ledger:od', () => {
+            const od = window.ledgerOD;
+            if (!od || !od.startTime || !hist[String(od.matchId)]) return;
+            const d = new Date(od.startTime * 1000).toISOString();
+            if (hist[String(od.matchId)].d === d) return;
+            hist[String(od.matchId)].d = d; hist[String(od.matchId)].od = 1; save(); render();
+        });
         render();
     })();
 
@@ -882,6 +891,7 @@
     const teamClass = (t) => (t === 2 ? 'r' : t === 3 ? 'd' : '');
 
     function who(x) { return x.Name || x.Hero || (x.Slot >= 0 ? T('Slot') + ' ' + x.Slot : '?'); }
+    const tshow = (t) => (window.LedgerReports && window.LedgerReports.fmt ? window.LedgerReports.fmt(t) : String(t == null ? '' : t));
 
     function renderReports(m) {
         if (!repPane) return;
@@ -899,7 +909,7 @@
             const av = esc((reporter || '?').trim().charAt(0).toUpperCase())
                 + (iconUrl ? '<img src="' + esc(iconUrl) + '" alt="" loading="lazy" data-drop="1">' : '');
             row.innerHTML =
-                '<span class="rep-time">' + esc(r.Time || '') + '</span>' +
+                '<span class="rep-time">' + esc(tshow(r.Time)) + '</span>' +
                 '<span class="rep-av">' + av + '</span>' +
                 '<span class="rep-who"><b>' + esc(reporter) + '</b>' + (hero ? '<small>' + esc(hero) + '</small>' : '') + '</span>' +
                 (target ? '<span class="rep-target">→ ' + esc(target) + '</span>' : '<span class="rep-target"></span>') +
@@ -962,7 +972,7 @@
                 const w = wheelPhrase(c);
                 const row = document.createElement('div');
                 row.className = 'chat-line wheel ' + teamClass(c.Team);
-                const t = document.createElement('span'); t.className = 'cl-time'; t.textContent = c.Time;
+                const t = document.createElement('span'); t.className = 'cl-time'; t.textContent = tshow(c.Time);
                 const scope = document.createElement('span'); scope.className = 'cl-scope';
                 scope.textContent = (c.AllChat != null ? c.AllChat : w.all) ? T('ALL') : T('TEAM');
                 const n = document.createElement('b'); n.className = 'cl-name'; n.textContent = who(c);
@@ -975,7 +985,7 @@
             const row = document.createElement('div');
             const flame = FLAME.test(c.Text || '');
             row.className = 'chat-line ' + teamClass(c.Team) + (flame ? ' flame' : '');
-            const t = document.createElement('span'); t.className = 'cl-time'; t.textContent = c.Time;
+            const t = document.createElement('span'); t.className = 'cl-time'; t.textContent = tshow(c.Time);
             const n = document.createElement('b'); n.className = 'cl-name'; n.textContent = who(c);
             const scope = document.createElement('span'); scope.className = 'cl-scope'; scope.textContent = c.AllChat ? T('ALL') : T('TEAM');
             const tx = document.createElement('span'); tx.className = 'cl-text'; tx.textContent = c.Text;
@@ -1025,7 +1035,7 @@
             const kk = evKey(e);
             const [icon, text] = [EV[kk][0], EV[kk][1](e)];
             const row = document.createElement('div'); row.className = 'ev-row ' + kk + ' ' + teamClass(e.Team);
-            row.innerHTML = '<span class="ev-time">' + esc(e.Time) + '</span><span class="ev-ic"><svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[icon] + '</svg></span><span class="ev-text">' + esc(text) + '</span>';
+            row.innerHTML = '<span class="ev-time">' + esc(tshow(e.Time)) + '</span><span class="ev-ic"><svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[icon] + '</svg></span><span class="ev-text">' + esc(text) + '</span>';
             list.appendChild(row);
         });
         evPane.appendChild(list);
@@ -1097,12 +1107,19 @@
             if (/ROSHAN/.test(ty) || /roshan/i.test(key)) { roshKills.push({ at: o.time }); return; }
             const id = keyToId(key); if (id && bById[id] && (bById[id].at == null || o.time < bById[id].at)) bById[id].at = o.time;
         });
-        // duration
+        // Match length = when the Ancient fell (OpenDota's duration). It used to also take the moment the
+        // last ward *would* expire, so a ward planted at 24:00 stretched a 24:48 game to 30:12 on the map.
         let dur = (od && od.duration) || 0;
-        wItems.forEach((w) => { if (w.dieAt > dur) dur = w.dieAt; });
+        if (!dur) {
+            // no OpenDota data: the last thing that really happened in the replay
+            wItems.forEach((w) => { if (w.placeAt > dur) dur = w.placeAt; });
+            wards.forEach((w) => { if (w.DeathTime) { const t = clSecs(w.DeathTime); if (t > dur) dur = t; } });
+            ['events', 'chat', 'reports'].forEach((k) => ((m && m[k]) || []).forEach((e) => { const t = clSecs(e && e.Time); if (t > dur) dur = t; }));
+        }
         blds.forEach((b) => { if (b.at != null && b.at > dur) dur = b.at; });
         deaths.forEach((d) => { if (d.t > dur) dur = d.t; });
         dur = Math.max(60, Math.round(dur));
+        wItems.forEach((w) => { if (w.dieAt > dur) w.dieAt = dur; });   // the game is over: no ward outlives it
 
         // ---- build DOM ----
         const grid = document.createElement('div'); grid.className = 'mapgrid';
@@ -1188,7 +1205,7 @@
         const nowline = [];
         const fbEv = ((m && m.events) || []).find((e) => String(e.Type || '').toLowerCase() === 'firstblood');
         if (fbEv) nowline.push({ t: clSecs(fbEv.Time), txt: T('First blood'), cls: 'fb' });
-        blds.forEach((b) => { if (b.at != null) nowline.push({ t: b.at, txt: (b.side === 'r' ? T('The Radiant') : T('The Dire')) + ' · ' + T('Tower down'), cls: b.side === 'r' ? 'tr' : 'td' }); });
+        blds.forEach((b) => { if (b.at != null) nowline.push({ t: b.at, txt: (b.side === 'r' ? T('The Radiant') : T('The Dire')) + ' · ' + T(b.kind === 'fort' ? 'Ancient destroyed' : 'Tower down'), cls: b.side === 'r' ? 'tr' : 'td' }); });
         roshKills.forEach((r) => nowline.push({ t: r.at, txt: T('Roshan killed'), cls: 'ro' }));
         nowline.sort((a, b) => a.t - b.t);
 
@@ -1207,7 +1224,8 @@
         const speedBtn = document.createElement('button'); speedBtn.type = 'button'; speedBtn.className = 'mm-speed'; speedBtn.textContent = '1×';
         const fill = document.createElement('div'); fill.className = 'mm-fill';
         const ticks = document.createElement('div'); ticks.className = 'mm-ticks';
-        deaths.forEach((d) => { if (d.t < 0 || d.t > dur) return; const tk = document.createElement('i'); tk.className = 'tk ' + (d.team === 2 ? 'r' : d.team === 3 ? 'd' : ''); tk.style.left = (d.t / dur * 100).toFixed(2) + '%'; ticks.appendChild(tk); });
+        // d.team is the side whose hero died; ticks and the score show the side that got the kill
+        deaths.forEach((d) => { if (d.t < 0 || d.t > dur) return; const tk = document.createElement('i'); tk.className = 'tk ' + (d.team === 3 ? 'r' : d.team === 2 ? 'd' : ''); tk.style.left = (d.t / dur * 100).toFixed(2) + '%'; ticks.appendChild(tk); });
         const sliderWrap = document.createElement('div'); sliderWrap.className = 'mm-slider-wrap'; sliderWrap.append(fill, ticks, slider);
         bar.append(playBtn, sliderWrap, speedBtn);
         panel.append(top, bar);
@@ -1218,7 +1236,10 @@
             wEls.forEach((w) => { w.el.classList.toggle('on', t >= w.placeAt && t < w.dieAt); });
             bEls.forEach((b) => { b.el.classList.toggle('down', b.at != null && t >= b.at); });
             rEls.forEach((r, i) => { const last = (r.at <= t) && (i === rEls.length - 1 || !(rEls[i + 1].at <= t)); r.el.classList.toggle('on', r.at <= t); r.el.classList.toggle('fresh', last && t - r.at < 30); });
-            let dr = 0, dd = 0; deaths.forEach((d) => { if (d.t <= t) { if (d.team === 2) dr++; else if (d.team === 3) dd++; } });
+            // Radiant's kills are Dire heroes dying and the other way round (the numbers were swapped).
+            // kills_log has only kills by heroes; at the end show the official score, as the tile above does.
+            let dr = 0, dd = 0; deaths.forEach((d) => { if (d.t <= t) { if (d.team === 3) dr++; else if (d.team === 2) dd++; } });
+            if (od && t >= dur && od.radiantScore != null && od.direScore != null) { dr = od.radiantScore; dd = od.direScore; }
             clockEl.innerHTML = '<b>' + mmss(t) + '</b><span>/ ' + mmss(dur) + '</span>'
                 + (deaths.length ? '<span class="kc"><i class="kr">' + dr + '</i><em>:</em><i class="kd">' + dd + '</i></span>' : '');
             fill.style.width = (dur ? (t / dur * 100) : 0).toFixed(1) + '%';
@@ -1280,7 +1301,7 @@
         const tox = chat.filter((c) => FLAME.test(c.Text || '')).length;
         const wheel = cnt('chat_wheel');
         const items = [];
-        if (fb) items.push(['blood', fb.Time, T('first blood')]);
+        if (fb) items.push(['blood', tshow(fb.Time), T('first blood')]);
         if (rosh) items.push(['rosh', rosh, T('Roshan')]);
         if (cour) items.push(['courier', cour, T('couriers')]);
         if (reps.length) items.push(['report', reps.length, T('reports')]);
@@ -1646,7 +1667,7 @@
                 if (j.radiantScore != null && j.direScore != null) scoreEl.textContent = j.radiantScore + ' — ' + j.direScore;
                 if (j.startTime) { try { dateEl.textContent = new Date(j.startTime * 1000).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' }); } catch (_) {} }
                 mfShow(j);
-                window.ledgerOD = { matchId: id, duration: j.duration, objectives: j.objectives || null, deaths: j.deaths || null };
+                window.ledgerOD = { matchId: id, duration: j.duration, objectives: j.objectives || null, deaths: j.deaths || null, radiantScore: j.radiantScore, direScore: j.direScore, startTime: j.startTime || null };
                 try { document.dispatchEvent(new CustomEvent('ledger:od')); } catch (_) {}
             }).catch(() => {});
     }
