@@ -132,6 +132,8 @@
         'OpenDota did not answer. Try again in a minute.': 'OpenDota не отвечает. Попробуй через минуту.', 'Cannot reach the server.': 'Нет связи с сервером.',
         'Could not look that up.': 'Не удалось найти.', 'Loading players...': 'Загрузка игроков...', 'All Players': 'Все игроки', 'Your Account': 'Твой аккаунт',
         'The replay engine is not running. Close DotaTraker and open start.bat again.': 'Движок реплеев не запущен. Закрой DotaTraker и снова открой start.bat.',
+        'The replay engine is updating, this takes up to a minute.': 'Движок обновляется, это займёт до минуты. Список откроется сам.',
+        'The replay engine is starting, one moment.': 'Движок запускается, секунду…',
         'Press Ctrl+C to copy': 'Нажми Ctrl+C', 'Loading conduct scorecard...': 'Загрузка карточки поведения...',
         // login
         'Sign in with your key': 'Вход по ключу', 'Player who made reports': 'Игрок, который репортил', 'Player (scoreboard activity)': 'Игрок (активность на табло)', 'Reports on the player, by minute': 'Репорты на игрока по минутам', 'Reports the player made, by minute': 'Репорты игрока по минутам', 'Press Ctrl+V to paste the key.': 'Нажми Ctrl+V, чтобы вставить ключ.', 'Enter the key you bought to unlock DotaTraker on this computer.': 'Введи купленный ключ, чтобы открыть DotaTraker на этом компьютере.',
@@ -495,7 +497,7 @@
         [/^Processing \((\d+)s\)\.\.\.$/, (m) => 'Обработка (' + m[1] + ' с)...'],
         [/^Steam: (.+)$/, (m) => 'Steam: ' + ({ Connected: 'подключён', Disconnected: 'отключён', Connecting: 'подключение', 'GC Ready': 'готов', 'Need Steam Guard Code': 'нужен код Steam Guard', 'Connected to Steam': 'подключён', 'Dota 2 GC Ready': 'Dota 2 GC готов', 'Rate Limited (Wait 24h)': 'лимит запросов (подожди 24 ч)' }[m[1]] || m[1])],
         [/^Status: (.+)$/, (m) => 'Статус: ' + ({ Disconnected: 'отключён', Connecting: 'подключение', 'Need Steam Guard Code': 'нужен код Steam Guard', 'Connected to Steam': 'подключён к Steam', 'Dota 2 GC Ready': 'Dota 2 GC готов', 'Rate Limited (Wait 24h)': 'лимит запросов (подожди 24 ч)', 'Disconnected (timeout)': 'отключён (таймаут)' }[m[1]] || m[1])],
-        [/^Could not open the replay folder: (.+)$/, (m) => 'Не удалось открыть папку с реплеями: ' + m[1]],
+        [/^Could not open the replay folder: (.+)$/, (m) => 'Не удалось открыть папку с реплеями: ' + (RU[m[1]] || m[1])],
         [/^Delete profile "(.+)"\?$/, (m) => 'Удалить профиль «' + m[1] + '»?'],
         [/^Delete (\d+) replays?\?$/, (m) => 'Удалить ' + m[1] + ' ' + plural(+m[1], 'реплей', 'реплея', 'реплеев') + '?'],
         [/^(.+)\. This cannot be undone\.$/, (m) => m[1] + '. Это нельзя отменить.'],

@@ -1852,6 +1852,8 @@ document.addEventListener('DOMContentLoaded', () => {
             browseDirectory(currentPath);
         })
         .catch(() => {
+            // engine down or updating: the list says so and keeps trying by itself
+            browseDirectory(currentPath);
         });
 
     // Auto-save config fields when they change (with debounce)
@@ -1957,6 +1959,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     let browseSeq = 0;
+    let browseRetries = 0, browseRetryTimer = null;   // the engine is updating/starting: try again by itself
     function browseDirectory(path = '', profileNameOverride, silent = false) {
         if (!replayList) return;
         if (!silent) {
@@ -1975,6 +1978,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(items => {
                 if (seq !== browseSeq) return;          // a newer request already answered
+                browseRetries = 0;
                 const pathChanged = currentPath !== path;
                 currentPath = path;
                 browseBackBtn.style.display = path ? 'inline-flex' : 'none';
@@ -1986,11 +1990,20 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(err => {
                 if (seq !== browseSeq) return;
-                if (!silent) {
+                // the gate answers {error, code}: show the words, not the JSON
+                let msg = err && err.message ? err.message : String(err), code = '';
+                try { const j = JSON.parse(msg); if (j && j.error) { msg = j.error; code = j.code || ''; } } catch (_) {}
+                const engineDown = code === 'engine_wait' || code === 'engine';
+                if (engineDown && browseRetries < 60) {
+                    browseRetries++;
+                    clearTimeout(browseRetryTimer);
+                    browseRetryTimer = setTimeout(() => { if (seq === browseSeq) browseDirectory(path, profileNameOverride, true); }, code === 'engine_wait' ? 3000 : 5000);
+                }
+                if (!silent || engineDown) {
                     replayList.textContent = '';
                     const p = document.createElement('p');
-                    p.className = 'list-empty bad';
-                    p.textContent = 'Could not open the replay folder: ' + (err && err.message ? err.message : err);
+                    p.className = 'list-empty ' + (code === 'engine_wait' ? 'wait' : 'bad');
+                    p.textContent = code === 'engine_wait' ? msg : 'Could not open the replay folder: ' + msg;
                     replayList.appendChild(p);
                 }
             });

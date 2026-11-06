@@ -627,6 +627,10 @@ input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; }
 .list-empty svg { width: 34px; height: 34px; stroke: var(--text-tertiary); fill: none; stroke-width: 1.5; margin-bottom: 4px; }
 .list-empty b { color: var(--text-primary); font: 600 0.95rem var(--font-display); }
 .list-empty.bad { color: var(--dire); }
+.list-empty.wait { color: var(--aegis); flex-direction: row; gap: 10px; }
+.list-empty.wait::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: lxspin .8s linear infinite; flex-shrink: 0; }
+@keyframes lxspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .list-empty.wait::before { animation-duration: 2.4s; } }
 .list-empty .btn { margin-top: 8px; }
 .list-head { margin: 0 0 10px; font-weight: 700; font-size: 0.86rem; }
 

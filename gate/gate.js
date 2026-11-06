@@ -341,8 +341,17 @@ function safeJoin(dir, rel) {
     return full.startsWith(dir + path.sep) || full === dir ? full : null;
 }
 
+// what the engine is doing while it cannot answer: 'updating' (new files downloading), 'starting'
+let engineNote = { state: '', until: 0 };
+function engineWait(state, ms) { engineNote = { state, until: now() + ms }; }
+function engineDownBody() {
+    if (engineNote.state && now() < engineNote.until) {
+        return { error: engineNote.state === 'updating' ? 'The replay engine is updating, this takes up to a minute.' : 'The replay engine is starting, one moment.', code: 'engine_wait' };
+    }
+    return { error: 'The replay engine is not running. Close DotaTraker and open start.bat again.', code: 'engine' };
+}
 function upstreamDown(req, res) {
-    if (String(req.url).startsWith('/api/')) return sendJson(res, 502, { error: 'The replay engine is not running. Close DotaTraker and open start.bat again.', code: 'engine' });
+    if (String(req.url).startsWith('/api/')) { const b = engineDownBody(); return sendJson(res, b.code === 'engine_wait' ? 503 : 502, b); }
     res.writeHead(502, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end('<!doctype html><meta charset="utf-8"><title>Engine offline</title><body style="font:15px system-ui;background:#0b1020;color:#eaf0ff;display:grid;place-items:center;height:100vh;margin:0"><div><h2 style="font-weight:600">The replay engine is not running</h2><p style="color:#a3adc7">Close DotaTraker and open start.bat again.</p></div>');
 }
@@ -480,6 +489,7 @@ function supervise(name, file, extraEnv) {
         if (shuttingDown) return;
         let errFd = 'ignore';
         try { errFd = fs.openSync(path.join(DATA_DIR, name + '.log'), 'w'); } catch (_) {}
+        if (name === 'server') engineWait('starting', 20000);
         const child = spawn(file, [], { cwd: ENGINE_DIR, env: Object.assign({}, process.env, extraEnv || {}), windowsHide: true, stdio: ['ignore', 'ignore', errFd] });
         if (typeof errFd === 'number') fs.close(errFd, () => {});
         const startedAt = now();
@@ -493,6 +503,7 @@ function supervise(name, file, extraEnv) {
             restarts++;
             if (restarts > 6) { console.error(`[gate] ${name} keeps stopping (exit ${code}). See gate/data/${name}.log`); return; }
             console.log(`[gate] ${name} stopped (exit ${code}), starting it again…`);
+            if (name === 'server') engineWait('starting', Math.min(30000, 1500 * restarts) + 20000);
             setTimeout(() => { run(); setTimeout(() => replayDir().catch(() => {}), 2500).unref(); }, Math.min(30000, 1500 * restarts)).unref();
         });
     };
@@ -591,7 +602,7 @@ function forwardToOldEngine(res, apiPath, body, timeoutMs) {
         ur.on('aborted', cut); ur.on('error', cut); ur.on('close', () => { if (!ur.complete) cut(); });
     });
     r.on('timeout', () => r.destroy(new Error('timeout')));
-    r.on('error', () => { if (!res.headersSent) sendJson(res, 502, { error: 'The replay engine is not running. Close DotaTraker and open start.bat again.', code: 'engine' }); else if (!res.destroyed) res.destroy(); });
+    r.on('error', () => { if (!res.headersSent) { const b = engineDownBody(); sendJson(res, b.code === 'engine_wait' ? 503 : 502, b); } else if (!res.destroyed) res.destroy(); });
     res.on('close', () => r.destroy());
     r.end(data);
 }
@@ -1247,6 +1258,7 @@ async function ensureEngine() {
     if (cur === ENGINE_REV) return;
     console.log('  Engine:  downloading the updated replay parser…');
     const names = ['server.exe', 'bot.exe', 'dtparse.exe'];
+    engineWait('updating', 10 * MIN);
     try {
         fs.mkdirSync(ENGINE_DIR, { recursive: true });
         for (const n of names) {
@@ -1260,6 +1272,8 @@ async function ensureEngine() {
     } catch (e) {
         for (const n of names) { try { fs.unlinkSync(path.join(ENGINE_DIR, n + '.new')); } catch (_) {} }
         console.log(`  ! Could not update the engine (${e.message}). The current one keeps working; will try again next start.`);
+    } finally {
+        engineWait('starting', 30000);
     }
 }
 
