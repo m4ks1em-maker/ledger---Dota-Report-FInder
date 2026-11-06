@@ -1,5 +1,6 @@
-# DotaTraker engine (Windows)
-Built from d3nd3/dota-report-timestamps with manta v1.5.1. Extracts match chat
-(all + team via CDOTAUserMsg_ChatMessage), glyph, pauses, disconnects, first blood,
-and ward placements (observer/sentry positions) for the ward map.
-Downloaded automatically by DotaTraker.
+# DotaTraker engine
+
+Binaries DotaTraker downloads into its `engine` folder (see `engineRev` in package.json on main).
+
+- `dtparse.exe` - DotaTraker's own replay engine (since rev 6): reports, scoreboard use, chat, events, wards. Built with dotabuff/manta.
+- `server.exe`, `bot.exe` - the original engine (d3nd3/dota-report-timestamps, MIT), kept for the Steam and replay-folder features.
