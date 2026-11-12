@@ -1,7 +1,7 @@
 {
   "name": "dotatraker-desktop",
   "productName": "DotaTraker",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "DotaTraker for Windows: the app in its own window, in the tray, with notifications.",
   "author": "m4ks1em",
   "license": "MIT",
