@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.44.0",
+  "version": "2.45.0",
   "engineRev": "14",
-  "releaseNotes": "New match page: who reported whom on a timeline of every player, likely reports with the reasons, players, match facts and the map.",
-  "releaseNotesRu": "Новая страница матча: кто кого репортил на таймлайне всех игроков, вероятные репорты с причинами, игроки, факты о матче и карта.",
+  "releaseNotes": "Settings, Steam sign-in and the Steam conduct summary rewritten; the summary now finds who reported you in those matches. The last code from the old web interface is gone.",
+  "releaseNotesRu": "Настройки, вход Steam-бота и отчёт о поведении Steam переписаны. Отчёт теперь сам находит, кто тебя репортил в этих матчах. Кода старого веб-интерфейса больше нет.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

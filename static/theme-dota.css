@@ -38,8 +38,7 @@
 :root:not([data-theme="light"]) .aurora { display: none; }
 
 /* panels */
-:root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) .tile, :root:not([data-theme="light"]) .setup-panel, :root:not([data-theme="light"]) .conduct-scorecard-banner,
-:root:not([data-theme="light"]) .account-pop, :root:not([data-theme="light"]) .dialog, :root:not([data-theme="light"]) .toast, :root:not([data-theme="light"]) .match-verdict {
+:root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) .tile, :root:not([data-theme="light"]) .setup-panel, :root:not([data-theme="light"]) .account-pop, :root:not([data-theme="light"]) .dialog, :root:not([data-theme="light"]) .toast, :root:not([data-theme="light"]) .match-verdict {
     background: var(--panel); border: 1px solid var(--frame); border-radius: 3px; box-shadow: var(--panel-shadow);
     backdrop-filter: none; -webkit-backdrop-filter: none;
 }
@@ -53,13 +52,13 @@
 :root:not([data-theme="light"]) .card-header h2, :root:not([data-theme="light"]) .main-card > .card-header h2, :root:not([data-theme="light"]) .card:not(.main-card) > .card-header h2 {
     font: 900 1.28rem/1.1 var(--font-ui); text-transform: uppercase; letter-spacing: 0.05em; color: #f6efdf; text-shadow: 0 2px 0 #000;
 }
-:root:not([data-theme="light"]) .t-eyebrow, :root:not([data-theme="light"]) .mv-eyebrow, :root:not([data-theme="light"]) .ms-label, :root:not([data-theme="light"]) .bot-eyebrow, :root:not([data-theme="light"]) .pl-eyebrow, :root:not([data-theme="light"]) .hint {
+:root:not([data-theme="light"]) .t-eyebrow, :root:not([data-theme="light"]) .bot-eyebrow, :root:not([data-theme="light"]) .pl-eyebrow, :root:not([data-theme="light"]) .hint {
     text-transform: uppercase; letter-spacing: 0.18em; font-weight: 800; font-size: 0.7rem; color: var(--accent);
 }
 :root:not([data-theme="light"]) .t-lookup h2, :root:not([data-theme="light"]) h1 { font-weight: 900; text-transform: uppercase; letter-spacing: 0.005em; color: #f6efdf; text-shadow: 0 2px 0 #000; }
 :root:not([data-theme="light"]) .kpi, :root:not([data-theme="light"]) .stat-value, :root:not([data-theme="light"]) .hs-cell .kpi, :root:not([data-theme="light"]) .pl-stat b, :root:not([data-theme="light"]) .ward-stat b { font-weight: 900; letter-spacing: -0.01em; color: var(--accent-strong); }
 :root:not([data-theme="light"]) .hs-cell span, :root:not([data-theme="light"]) .pl-stat span, :root:not([data-theme="light"]) .ward-stat span { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.68rem; font-weight: 800; color: var(--text-tertiary); }
-:root:not([data-theme="light"]) .rep-head-t, :root:not([data-theme="light"]) .pt-head, :root:not([data-theme="light"]) .graph-title, :root:not([data-theme="light"]) .pl-h3, :root:not([data-theme="light"]) .pl-col h3 { text-transform: uppercase; letter-spacing: 0.1em; font: 900 0.86rem var(--font-ui); color: #f6efdf; }
+:root:not([data-theme="light"]) .pl-h3, :root:not([data-theme="light"]) .pl-col h3 { text-transform: uppercase; letter-spacing: 0.1em; font: 900 0.86rem var(--font-ui); color: #f6efdf; }
 :root:not([data-theme="light"]) .brand-name { font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
 
 /* header: a solid client bar across the window, gold hairline, flat tabs */
@@ -106,38 +105,31 @@
 :root:not([data-theme="light"]) .lk-form .btn, :root:not([data-theme="light"]) .pl-form .btn { border-radius: 2px; }
 
 /* segmented switches: flat tabs with a gold underline */
-:root:not([data-theme="light"]) .graph-view-selector, :root:not([data-theme="light"]) .moments-switch, :root:not([data-theme="light"]) .tools-switch, :root:not([data-theme="light"]) .mf-seg,
-:root:not([data-theme="light"]) .mfeed-head, :root:not([data-theme="light"]) .adv-sw, :root:not([data-theme="light"]) .seg {
+:root:not([data-theme="light"]) .tools-switch, :root:not([data-theme="light"]) .mfeed-head, :root:not([data-theme="light"]) .adv-sw, :root:not([data-theme="light"]) .seg {
     background: #0d0f12; border: 1px solid var(--frame); border-radius: 2px; box-shadow: inset 0 0 0 1px #000; padding: 2px; gap: 2px;
 }
-:root:not([data-theme="light"]) .graph-view-tab, :root:not([data-theme="light"]) .moments-switch button, :root:not([data-theme="light"]) .tools-switch button, :root:not([data-theme="light"]) .mf-seg button,
-:root:not([data-theme="light"]) .mfeed-head button, :root:not([data-theme="light"]) .adv-sw button, :root:not([data-theme="light"]) .seg button {
+:root:not([data-theme="light"]) .tools-switch button, :root:not([data-theme="light"]) .mfeed-head button, :root:not([data-theme="light"]) .adv-sw button, :root:not([data-theme="light"]) .seg button {
     border-radius: 1px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; font-size: 0.68rem; color: #8d8778; background: transparent; box-shadow: none;
 }
-:root:not([data-theme="light"]) .graph-view-tab.active, :root:not([data-theme="light"]) .moments-switch button.on, :root:not([data-theme="light"]) .tools-switch button.on, :root:not([data-theme="light"]) .mf-seg button.on,
-:root:not([data-theme="light"]) .mfeed-head button.on, :root:not([data-theme="light"]) .adv-sw button.on, :root:not([data-theme="light"]) .seg button.on {
+:root:not([data-theme="light"]) .tools-switch button.on, :root:not([data-theme="light"]) .mfeed-head button.on, :root:not([data-theme="light"]) .adv-sw button.on, :root:not([data-theme="light"]) .seg button.on {
     background: linear-gradient(0deg, rgba(199, 160, 90, 0.22), rgba(199, 160, 90, 0.04)); color: var(--accent-strong); box-shadow: inset 0 -2px 0 var(--accent);
 }
 :root:not([data-theme="light"]) .mfeed-head { border-width: 0 0 1px; border-radius: 0; padding: 6px 8px; }
 
 /* chips and tags: squared */
-:root:not([data-theme="light"]) .rep-lvl, :root:not([data-theme="light"]) .rp-tag, :root:not([data-theme="light"]) .tl-wl, :root:not([data-theme="light"]) .lk-wl, :root:not([data-theme="light"]) .rep-tag, :root:not([data-theme="light"]) .ev-chip, :root:not([data-theme="light"]) .tag,
-:root:not([data-theme="light"]) .hl-chip, :root:not([data-theme="light"]) .cs-chip, :root:not([data-theme="light"]) .pl-chip, :root:not([data-theme="light"]) .pl-res, :root:not([data-theme="light"]) .pl-mc i, :root:not([data-theme="light"]) .pl-links a,
-:root:not([data-theme="light"]) .pl-verdict, :root:not([data-theme="light"]) .lvl, :root:not([data-theme="light"]) .tm, :root:not([data-theme="light"]) .chip, :root:not([data-theme="light"]) .mm-speed, :root:not([data-theme="light"]) .mm-fights,
-:root:not([data-theme="light"]) .mm-fights button, :root:not([data-theme="light"]) .mm-play, :root:not([data-theme="light"]) .rh .rk, :root:not([data-theme="light"]) .fe-ic, :root:not([data-theme="light"]) .chat-badge {
+:root:not([data-theme="light"]) .rp-tag, :root:not([data-theme="light"]) .tl-wl, :root:not([data-theme="light"]) .lk-wl, :root:not([data-theme="light"]) .tag, :root:not([data-theme="light"]) .pl-chip, :root:not([data-theme="light"]) .pl-res, :root:not([data-theme="light"]) .pl-mc i, :root:not([data-theme="light"]) .pl-links a, :root:not([data-theme="light"]) .pl-verdict, :root:not([data-theme="light"]) .tm, :root:not([data-theme="light"]) .chip, :root:not([data-theme="light"]) .mm-speed, :root:not([data-theme="light"]) .mm-fights, :root:not([data-theme="light"]) .mm-fights button, :root:not([data-theme="light"]) .mm-play, :root:not([data-theme="light"]) .rh .rk, :root:not([data-theme="light"]) .fe-ic, :root:not([data-theme="light"]) .chat-badge {
     border-radius: 2px;
 }
 :root:not([data-theme="light"]) .lk-wl, :root:not([data-theme="light"]) .tl-wl, :root:not([data-theme="light"]) .pl-res { text-transform: uppercase; letter-spacing: 0.12em; font-weight: 900; background: transparent; padding-left: 0; padding-right: 0; }
-:root:not([data-theme="light"]) .hl-chip, :root:not([data-theme="light"]) .cs-chip { background: linear-gradient(180deg, #17191d, #101215); border: 1px solid var(--frame); box-shadow: inset 0 0 0 1px #000; }
 
 /* lists */
 :root:not([data-theme="light"]) .replay-list, :root:not([data-theme="light"]) .lk-rows { background: #0d0f12; border: 1px solid var(--frame); border-radius: 2px; box-shadow: inset 0 0 0 1px #000; }
 :root:not([data-theme="light"]) .lk-row, :root:not([data-theme="light"]) .replay-item { border-color: #22201b; }
 :root:not([data-theme="light"]) .lk-row:hover, :root:not([data-theme="light"]) .replay-item:hover { background: rgba(199, 160, 90, 0.05); }
 :root:not([data-theme="light"]) .replay-item:has(input:checked) { background: linear-gradient(90deg, rgba(199, 160, 90, 0.12), transparent 70%); box-shadow: inset 2px 0 0 var(--accent); }
-:root:not([data-theme="light"]) .pl-match, :root:not([data-theme="light"]) .re-row, :root:not([data-theme="light"]) .pl-group { border-radius: 2px; border-color: #2a2720; background: rgba(255, 255, 255, 0.02); }
+:root:not([data-theme="light"]) .pl-match, :root:not([data-theme="light"]) .pl-group { border-radius: 2px; border-color: #2a2720; background: rgba(255, 255, 255, 0.02); }
 :root:not([data-theme="light"]) .pl-match:hover { background: rgba(199, 160, 90, 0.06); border-color: var(--frame); }
-:root:not([data-theme="light"]) .pl-hero, :root:not([data-theme="light"]) .re-card { border-radius: 3px; border-color: var(--frame); }
+:root:not([data-theme="light"]) .pl-hero { border-radius: 3px; border-color: var(--frame); }
 
 /* match screen pieces */
 :root:not([data-theme="light"]) .matchmap-wrap, :root:not([data-theme="light"]) .mm-panel, :root:not([data-theme="light"]) .mfeed, :root:not([data-theme="light"]) .ward-stat, :root:not([data-theme="light"]) .mm-adv {
@@ -153,8 +145,8 @@
 :root:not([data-theme="light"]) .fe { border-radius: 1px; }
 :root:not([data-theme="light"]) .fe.now { background: linear-gradient(90deg, rgba(199, 160, 90, 0.16), transparent); box-shadow: inset 2px 0 0 var(--accent); }
 :root:not([data-theme="light"]) .fe.fight { border-radius: 2px; }
-:root:not([data-theme="light"]) .match-verdict .mv-title, :root:not([data-theme="light"]) #mv-title { text-transform: uppercase; font-weight: 900; letter-spacing: 0.02em; }
-:root:not([data-theme="light"]) .tile.ms-tile, :root:not([data-theme="light"]) #match-stats > * { border-radius: 2px; }
+:root:not([data-theme="light"]) #mv-title { text-transform: uppercase; font-weight: 900; letter-spacing: 0.02em; }
+:root:not([data-theme="light"]) #match-stats > * { border-radius: 2px; }
 
 /* the "done" bar and toasts */
 :root:not([data-theme="light"]) #ledger-done.done-bar:not(.hidden) { border-radius: 3px; background: linear-gradient(180deg, #1a1c20, #0f1013); border: 1px solid var(--frame); box-shadow: var(--panel-shadow); backdrop-filter: none; }
@@ -181,10 +173,6 @@
 :root:not([data-theme="light"]) .hs-cell.bad span.kpi { color: var(--dire); }
 
 /* match header: with the flow chart gone, the four tiles fill the height next to the verdict */
-.mt-main > .match-stats { flex: 1; grid-auto-rows: 1fr; }
-.mt-main > .match-stats > * { display: flex; flex-direction: column; justify-content: space-between; }
-.match-top > .match-verdict { min-height: 380px; }
-:root:not([data-theme="light"]) .match-stats .ms-value, :root:not([data-theme="light"]) .match-stats b { font-size: clamp(2rem, 3.2vw, 2.8rem); font-weight: 900; }
 
 /* ===== profile window in the client's style ===== */
 :root:not([data-theme="light"]) .pf {
