@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.41.2",
+  "version": "2.42.0",
   "engineRev": "14",
-  "releaseNotes": "Windows app: \"Check for updates\" in the tray installs the new DotaTraker at once; updates install by themselves while the window is in the tray.",
-  "releaseNotesRu": "Программа для Windows: «Проверить обновления» в трее сразу ставит новую версию; пока окно в трее, обновления ставятся сами.",
+  "releaseNotes": "New Replays page (filters, search, hero cards, match history with download all) and quick search Ctrl+K.",
+  "releaseNotesRu": "Новая страница «Реплеи» (фильтры, поиск, карточки с героями, история матчей со «Скачать все») и быстрый поиск Ctrl+K.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

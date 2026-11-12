@@ -9,7 +9,8 @@
     <link rel="icon" href="/img/logo-64.png" type="image/png">
     <link rel="stylesheet" href="fonts.css?v=88">
     <link rel="stylesheet" href="style.css?v=88">
-    <link rel="stylesheet" href="shell.css?v=2">
+    <link rel="stylesheet" href="shell.css?v=3">
+    <link rel="stylesheet" href="pages.css?v=1">
     <script type="speculationrules">{"prerender":[{"where":{"and":[{"href_matches":"/home"},{"not":{"selector_matches":"[target]"}}]},"eagerness":"moderate"}]}</script>
     <link rel="stylesheet" href="theme-dota.css?v=88">
     <script src="i18n.js?v=88"></script>
@@ -71,7 +72,8 @@
                 </button>
             </div>
         </header>
-        <script src="shell.js?v=2"></script>
+        <script src="shell.js?v=3"></script>
+        <script src="palette.js?v=1"></script>
 
         <div id="setup-panel" class="setup-panel hidden" role="region" aria-label="Settings">
             <div class="setup-content">
@@ -239,73 +241,48 @@
             </div>
 
             <div class="tab-content" id="browse-tab">
-                <div class="browse-grid">
-                    <section id="selection-section" class="card main-card">
-                        <div class="card-header">
-                            <h2>Local replays</h2>
-                            <div class="header-controls">
-                                <div id="current-path" class="current-path"></div>
-                                <button id="browse-back" class="btn text-btn" style="display: none;">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
-                                    Back
-                                </button>
-                                <button id="refresh-replays" class="btn icon-btn" title="Refresh" aria-label="Refresh">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="selection-controls">
-                                <div class="btn-group">
-                                    <button id="select-all" class="btn small-btn">All</button>
-                                    <button id="deselect-all" class="btn small-btn">None</button>
-                                    <div class="select-last-group">
-                                        <input type="number" id="select-last-count" class="select-last-input" placeholder="X" min="1" value="10" aria-label="Number of latest replays">
-                                        <button id="select-last" class="btn small-btn">Latest</button>
-                                    </div>
+                <div class="pg">
+                    <header class="pg-top">
+                        <div class="pg-title"><h1>Replays</h1><div id="current-path" class="pg-crumb"></div></div>
+                        <label class="pg-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+                            <input type="search" id="rp-q" placeholder="Match ID or hero" spellcheck="false" autocomplete="off" aria-label="Search replays"></label>
+                        <button id="refresh-replays" class="pg-btn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span>Refresh</span></button>
+                        <button id="rp-open" class="pg-btn gold" type="button"><span>Open matches</span><b></b> →</button>
+                    </header>
+                    <div class="pg-grid">
+                        <section class="pg-card rp-card" id="selection-section">
+                            <div class="pg-bar">
+                                <div class="pg-chips" id="rp-chips">
+                                    <button type="button" class="pg-chip on" data-f="all"><span>All</span> · <b>0</b></button>
+                                    <button type="button" class="pg-chip" data-f="rep"><span>With reports</span> · <b>0</b></button>
+                                    <button type="button" class="pg-chip" data-f="new"><span>Not analysed</span> · <b>0</b></button>
                                 </div>
-                                <label class="replay-search">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
-                                    <input type="search" id="replay-search" placeholder="Search by match ID" spellcheck="false" autocomplete="off" aria-label="Search replays">
-                                    <span class="rs-count" id="replay-search-count"></span>
-                                </label>
-                                <button id="delete-selected" class="btn danger-btn small-btn">Delete selected</button>
+                                <span class="pg-grow"></span>
+                                <button id="select-all" class="pg-chip" type="button">All</button>
+                                <span class="pg-last"><button id="select-last" class="pg-chip" type="button">Latest</button><input type="number" id="select-last-count" min="1" max="200" value="10" aria-label="How many latest"></span>
+                                <button id="deselect-all" class="pg-chip" type="button">Clear</button>
+                                <button id="rp-delete" class="pg-chip del" type="button" disabled>Delete</button>
                             </div>
-                            <div id="replay-list" class="replay-list custom-scrollbar">
-                                <div class="skeleton-list"><i></i><i></i><i></i><i></i></div>
-                            </div>
-                            <p class="list-note">Tick replays and they are analysed on their own. Open the Matches tab to see the timeline.</p>
-                        </div>
-                    </section>
-
-                    <div class="browse-sidebar">
-                        <section id="history-section" class="card">
-                            <div class="card-header">
-                                <h2>Match history</h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="input-group">
-                                    <label for="history-steam-id">Steam ID</label>
-                                    <input type="text" id="history-steam-id" placeholder="e.g. 76561198..." inputmode="numeric" spellcheck="false">
-                                </div>
-                                <div class="input-group">
-                                    <label for="history-limit">How many matches</label>
-                                    <div class="row-group">
-                                        <input type="number" id="history-limit" value="10" min="1" max="100">
-                                        <button id="fetch-history" class="btn secondary-btn">Fetch</button>
-                                    </div>
-                                </div>
-                                <div class="input-group">
-                                    <label class="check">
-                                        <input type="checkbox" id="history-turbo-only">
-                                        Turbo games only
-                                    </label>
-                                </div>
-                                <small>Needs a Steam connection.</small>
-                                <p id="download-status" class="download-status hidden"></p>
-                                <div id="history-results" class="history-list custom-scrollbar"></div>
-                            </div>
+                            <div class="pg-crumbs hidden" id="rp-crumbs"></div>
+                            <div id="replay-list" class="rp-list custom-scrollbar"><div class="pg-skel"><i></i><i></i><i></i><i></i><i></i></div></div>
+                            <div class="pg-foot"><span>Tick replays and they are analysed on their own. The timeline opens in the Matches tab.</span><span id="rp-count"></span></div>
                         </section>
+                        <aside class="pg-side">
+                            <section class="pg-card" id="history-section">
+                                <h3>Match history</h3>
+                                <label class="pg-field"><span>Steam ID</span><input type="text" id="history-steam-id" placeholder="76561198…" inputmode="numeric" spellcheck="false"></label>
+                                <div class="pg-row">
+                                    <label class="pg-field"><span>How many matches</span><input type="number" id="history-limit" value="10" min="1" max="100"></label>
+                                    <button id="fetch-history" class="pg-btn gold" type="button">Fetch</button>
+                                </div>
+                                <label class="pg-check"><input type="checkbox" id="history-turbo-only"><i></i>Turbo only</label>
+                                <div id="history-results" class="hs-list custom-scrollbar"></div>
+                            </section>
+                            <section class="pg-card pg-drop">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0-4 4m4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
+                                <div><b>Your own replay</b><span>Drop a .dem into the window and DotaTraker analyses it.</span></div>
+                            </section>
+                        </aside>
                     </div>
                 </div>
             </div>
@@ -776,9 +753,9 @@
 
     <script src="vendor/chart.umd.min.js?v=4.4.0"></script>
     <script src="trial.js?v=88"></script>
-    <script src="app.js?v=88"></script>
+    <script src="replays.js?v=1"></script>
+    <script src="app.js?v=89"></script>
     <script src="chatwheel.js?v=88"></script>
-    <script src="history.js?v=88"></script>
     <script src="ledger.js?v=88"></script>
     <script src="tools.js?v=88"></script>
     <script src="chat.js?v=88"></script>

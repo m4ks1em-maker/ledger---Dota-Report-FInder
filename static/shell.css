@@ -78,3 +78,32 @@ body.dt-shell .main-header { display: none !important; }
     .dt-n { position: absolute; top: 2px; right: 2px; min-width: 17px; height: 17px; line-height: 17px; font-size: 10px; }
     .dt-key { padding: 8px; margin-bottom: 8px; } .dt-me .header-actions { padding: 6px; }
 }
+
+/* ---- quick search (static/palette.js) */
+.dt-find { display: flex; align-items: center; gap: 10px; height: 38px; margin: 0 0 6px; padding: 0 10px 0 12px; border-radius: 11px; background: #ffffff06; border: 1px solid #ffffff12; color: #6b7781; font: 500 13.5px 'Inter Tight', sans-serif; cursor: pointer; transition: border-color .2s, color .2s; }
+.dt-find:hover { border-color: #ecc96c55; color: #c3ccd4; }
+.dt-find svg { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.dt-find kbd { margin-left: auto; font: 600 10.5px 'JetBrains Mono', monospace; color: #55616c; border: 1px solid #ffffff1c; border-radius: 5px; padding: 1px 5px; }
+@media (max-width: 1100px) { .dt-find { width: 52px; justify-content: center; padding: 0; } .dt-find span, .dt-find kbd { display: none; } }
+.dtp { position: fixed; inset: 0; z-index: 400; display: flex; justify-content: center; align-items: flex-start; padding-top: 12vh; font-family: 'Inter Tight', system-ui, sans-serif; color: #e9eef2; }
+.dtp.hidden { display: none; }
+.dtp-back { position: absolute; inset: 0; background: #04060999; backdrop-filter: blur(6px); opacity: 0; transition: opacity .14s; }
+.dtp-win { position: relative; width: min(640px, calc(100vw - 32px)); border-radius: 18px; background: #10141af7; border: 1px solid #ffffff1f; box-shadow: 0 40px 90px #000c, 0 0 0 1px #ecc96c14; overflow: hidden;
+    opacity: 0; transform: translateY(-8px) scale(.98); transition: opacity .16s, transform .2s cubic-bezier(.2,.8,.2,1); }
+.dtp.on .dtp-back { opacity: 1; } .dtp.on .dtp-win { opacity: 1; transform: none; }
+.dtp-in { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 60px; border-bottom: 1px solid #ffffff12; }
+.dtp-in svg { width: 20px; height: 20px; fill: none; stroke: #ecc96c; stroke-width: 2; stroke-linecap: round; flex: none; }
+.dtp-in input { flex: 1; min-width: 0; height: 100%; border: 0 !important; outline: 0; background: none !important; color: #fff; font: 500 17px 'Inter Tight', sans-serif; box-shadow: none !important; padding: 0 !important; }
+.dtp-in input::placeholder { color: #55616c; }
+.dtp kbd { font: 600 10.5px 'JetBrains Mono', monospace; color: #8c99a5; border: 1px solid #ffffff1f; border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: #ffffff06; }
+.dtp-list { max-height: min(56vh, 460px); overflow-y: auto; padding: 8px; }
+.dtp-g { font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; color: #55616c; font-weight: 700; padding: 10px 10px 6px; }
+.dtp-it { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 12px; border-radius: 11px; cursor: pointer; color: #b7c2cb; }
+.dtp-it svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.dtp-it b { font-size: 14.5px; font-weight: 600; color: #e9eef2; white-space: nowrap; }
+.dtp-it span { font-size: 12.5px; color: #6b7781; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dtp-it em { margin-left: auto; font-style: normal; color: #55616c; opacity: 0; }
+.dtp-it.on { background: linear-gradient(90deg, #ecc96c1f, #ecc96c08); box-shadow: inset 0 0 0 1px #ecc96c33; } .dtp-it.on svg { color: #ecc96c; } .dtp-it.on em { opacity: 1; color: #ecc96c; }
+.dtp-none { padding: 26px; text-align: center; color: #6b7781; font-size: 14px; }
+.dtp-foot { display: flex; gap: 18px; padding: 10px 16px; border-top: 1px solid #ffffff10; font-size: 12px; color: #6b7781; }
+.dtp-foot i { font-style: normal; margin-left: 4px; }
