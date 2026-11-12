@@ -11,7 +11,8 @@
     <link rel="stylesheet" href="style.css?v=89">
     <link rel="stylesheet" href="shell.css?v=3">
     <link rel="stylesheet" href="prices.css?v=1">
-    <link rel="stylesheet" href="pages.css?v=1">
+    <link rel="stylesheet" href="pages.css?v=2">
+    <link rel="stylesheet" href="match.css?v=1">
     <script type="speculationrules">{"prerender":[{"where":{"and":[{"href_matches":"/home"},{"not":{"selector_matches":"[target]"}}]},"eagerness":"moderate"}]}</script>
     <link rel="stylesheet" href="theme-dota.css?v=88">
     <script src="i18n.js?v=88"></script>
@@ -529,192 +530,64 @@
             </div>
 
             <div class="tab-content" id="results-tab">
-                <div id="results-empty" class="card empty-card">
-                    <div class="empty-art" aria-hidden="true"><i class="r"></i><i class="d"></i><i class="r"></i></div>
-                    <h2>No match open yet</h2>
-                    <p>Tick replays on the Replays tab or look a player up on Home. The timeline appears here.</p>
-                    <button type="button" class="btn secondary-btn" data-go="browse">Open replays</button>
+                <div class="pg mt">
+                    <div id="results-empty" class="mt-empty">
+                        <div class="pg-empty">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18"/><circle cx="7" cy="12" r="2.2"/><circle cx="14" cy="12" r="2.2"/><path d="M18 8v8"/></svg>
+                            <b>No match open yet</b>
+                            <span>Tick replays on the Replays tab or look a player up on Home. Who reported whom shows up here.</span>
+                            <button type="button" class="pg-btn gold" data-go="browse">Open replays</button>
+                        </div>
+                    </div>
+                    <div id="mt-busy" class="mt-busy hidden" role="status">
+                        <span class="mt-spin" aria-hidden="true"></span>
+                        <span><b></b><small></small></span>
+                        <i><s></s></i>
+                    </div>
+                    <div id="results-section" class="hidden">
+                        <header class="pg-top">
+                            <div class="pg-title"><h1 id="mt-title">Match</h1><div id="mt-crumb" class="pg-crumb"></div></div>
+                            <button id="mt-copy" class="pg-btn" type="button" title="Copy the match ID"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy ID</span></button>
+                            <a id="mt-od" class="pg-btn" target="_blank" rel="noopener noreferrer">OpenDota</a>
+                            <a id="mt-db" class="pg-btn" target="_blank" rel="noopener noreferrer">Dotabuff</a>
+                            <div class="mt-export"><button type="button" class="pg-btn" data-export="csv">CSV</button><button type="button" class="pg-btn" data-export="json">JSON</button></div>
+                            <button id="mv-share" class="pg-btn gold" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M12 3l-4 4M12 3l4 4M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg><span>Share</span></button>
+                        </header>
+                        <div id="mt-switch" class="mt-switch hidden"></div>
+                        <select id="match-selector" class="hidden" aria-hidden="true" tabindex="-1"></select>
+                        <div class="pg-grid">
+                            <div class="mt-main">
+                                <section id="match-verdict" class="mt-hero">
+                                    <div class="mt-art" aria-hidden="true"><img alt="" decoding="async"><video muted loop playsinline preload="none"></video></div>
+                                    <div class="mt-hero-txt"></div>
+                                    <div class="mt-ring">
+                                        <svg viewBox="0 0 110 110" aria-hidden="true"><circle class="mt-track" cx="55" cy="55" r="48"/><circle class="mt-arc" cx="55" cy="55" r="48" transform="rotate(-90 55 55)"/></svg>
+                                        <span><b>0</b><small></small></span>
+                                    </div>
+                                </section>
+                                <section class="pg-card mt-rep">
+                                    <div class="mt-rep-h">
+                                        <h3>Who reported whom</h3>
+                                        <div class="mt-seg hidden" id="mt-dir"></div>
+                                    </div>
+                                    <div class="mt-picks" id="mt-picks"></div>
+                                    <div class="mt-legend" aria-hidden="true"><span class="sb">Scoreboard open</span><span class="dt">Death</span><span class="al">Report from a teammate</span><span class="en">Report from an enemy</span></div>
+                                    <div class="mt-tl" id="mt-tl"></div>
+                                    <div class="mt-list mt-in" id="mt-list"></div>
+                                </section>
+                            </div>
+                            <aside class="pg-side">
+                                <section class="pg-card mt-players" id="mt-players"></section>
+                                <section class="pg-card mt-facts" id="mt-facts"></section>
+                                <section class="pg-card mt-note hidden" id="mt-note"></section>
+                            </aside>
+                        </div>
+                        <section id="moments-section" class="pg-card mt-map hidden">
+                            <h3>Match map</h3>
+                            <div id="moments-wards" class="moments-pane"></div>
+                        </section>
+                    </div>
                 </div>
-                <section id="results-section" class="card main-card hidden">
-                    <div class="card-header">
-                        <h2>Match</h2>
-                        <div id="match-meta" class="match-meta hidden"></div>
-                    </div>
-                    <div class="card-body">
-                        <div class="match-top">
-                        <div class="mt-main">
-                        <div id="match-stats" class="match-stats hidden">
-                            <div class="ms-tile">
-                                <span class="ms-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Duration</span>
-                                <b id="ms-duration">—</b>
-                            </div>
-                            <div class="ms-tile">
-                                <span class="ms-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v4a6 6 0 0 1-12 0zM9 14h6v3H9zM8 20h8"/></svg>Winner</span>
-                                <b id="ms-winner">—</b>
-                            </div>
-                            <div class="ms-tile">
-                                <span class="ms-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></svg>Date</span>
-                                <b id="ms-date">—</b>
-                            </div>
-                            <div class="ms-tile">
-                                <span class="ms-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Score</span>
-                                <b id="ms-score">—</b>
-                            </div>
-                        </div>
-                        <div id="matchflow" class="matchflow hidden">
-                            <div class="mf-head">
-                                <span class="mf-title">Match flow</span>
-                                <div class="mf-controls">
-                                    <div class="mf-seg mf-ranges" id="mf-ranges">
-                                        <button type="button" data-r="all" class="on">Whole match</button>
-                                        <button type="button" data-r="lane">Lane</button>
-                                        <button type="button" data-r="mid">Midgame</button>
-                                        <button type="button" data-r="late">Late game</button>
-                                    </div>
-                                    <div class="mf-seg mf-metric" id="mf-metric">
-                                        <button type="button" data-k="gold" class="on">Gold</button>
-                                        <button type="button" data-k="xp">XP</button>
-                                    </div>
-                                    <button type="button" class="mf-collapse" id="mf-collapse" aria-label="Collapse">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="mf-canvas-wrap"><canvas id="mf-canvas"></canvas><div class="mf-tip hidden" id="mf-tip"></div></div>
-                            <div class="mf-foot"><span class="mf-leg r">The Radiant</span><span class="mf-leg d">The Dire</span><span class="mf-leg-markers">On the line: FB · Roshan · ! report</span></div>
-                            <p class="mf-note hidden" id="mf-note"></p>
-                        </div>
-                        </div>
-                        <div id="match-verdict" class="match-verdict hidden">
-                            <div class="mv-text">
-                                <div class="mv-eyebrow">Verdict</div>
-                                <div class="mv-title" id="mv-title">—</div>
-                                <div class="mv-sub" id="mv-sub"></div>
-                                <button type="button" class="btn mv-share" id="mv-share">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><path d="M12 15V3M12 3l-4 4M12 3l4 4M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                    Share
-                                </button>
-                            </div>
-                            <div class="mv-gauge">
-                                <svg viewBox="0 0 160 160" aria-hidden="true">
-                                    <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,228,196,.08)" stroke-width="7"/>
-                                    <circle id="mv-arc" cx="80" cy="80" r="70" fill="none" stroke="url(#mvg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="440" stroke-dashoffset="440" transform="rotate(-90 80 80)"/>
-                                    <defs><linearGradient id="mvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd6a8"/><stop offset="1" stop-color="#e0965a"/></linearGradient></defs>
-                                </svg>
-                                <div class="mv-num"><b id="mv-count">0</b><span id="mv-count-label">reports</span></div>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="selector-row">
-                            <div id="match-selector-container" class="match-selector-container hidden">
-                                <label for="match-selector">Match</label>
-                                <select id="match-selector" class="match-selector">
-                                    <option value="">Select a match...</option>
-                                </select>
-                            </div>
-                            <div id="player-selector-container" class="player-selector-container hidden">
-                                <label for="player-selector-display">Player who received reports</label>
-                                <div class="custom-select-wrapper">
-                                    <div id="player-selector-display" class="custom-select-display" tabindex="0" role="button" aria-haspopup="listbox">
-                                        <span class="select-placeholder">Select a player...</span>
-                                    </div>
-                                    <div id="player-selector-dropdown" class="custom-select-dropdown hidden" role="listbox"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="timeline-graph-header">
-                            <div class="graph-view-selector" data-glider=".graph-view-tab">
-                                <button class="graph-view-tab active" data-view="reports" title="Reports on the selected player">
-                                    <span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 8v9h9"/></svg></span>
-                                    <span class="tab-label">Incoming</span>
-                                </button>
-                                <button class="graph-view-tab" data-view="playerReports" title="Reports the selected player made">
-                                    <span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
-                                    <span class="tab-label">Outgoing</span>
-                                </button>
-                                <button class="graph-view-tab" data-view="scoreboard" title="When each player had the scoreboard open">
-                                    <span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
-                                    <span class="tab-label">Scoreboard</span>
-                                </button>
-                            </div>
-                            <div class="legend" aria-hidden="true"><span class="lg r">Teammates</span><span class="lg d">Enemies</span></div>
-                        </div>
-                        <div id="timeline-graph-container" class="timeline-graph-container custom-scrollbar">
-                            <div id="graph-loading-overlay" class="graph-loading-overlay hidden">
-                                <div class="graph-loading-spinner"></div>
-                                <div class="graph-loading-text">Loading graph...</div>
-                            </div>
-                            <canvas id="timeline-graph"></canvas>
-                        </div>
-                        <div id="graphs-section" class="graphs-section hidden">
-                            <div id="report-summary" class="report-summary" style="display: none;">
-                                <h3>Report summary</h3>
-                                <div class="summary-stats">
-                                    <div class="stat-item">
-                                        <span class="stat-label">From teammates</span>
-                                        <span class="stat-value" id="total-friendly-reports">0</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">From enemies</span>
-                                        <span class="stat-value" id="total-enemy-reports">0</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">Total</span>
-                                        <span class="stat-value" id="total-combined-reports">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <h3 class="unconfirmed-section-title">Unconfirmed reports</h3>
-                            <div class="graphs-grid">
-                                <div class="graph-container"><canvas id="unconfirmedTeamEnemyChart"></canvas></div>
-                                <div class="graph-container"><canvas id="unconfirmedStatusChart"></canvas></div>
-                                <div class="graph-container" id="unconfirmedPerMatchContainer"><canvas id="unconfirmedPerMatchChart"></canvas></div>
-                                <div class="graph-container"><canvas id="unconfirmedTimelineChart"></canvas></div>
-                                <div class="graph-container"><canvas id="unconfirmedTopReportersChart"></canvas></div>
-                            </div>
-                            <div id="playerReportsPerMatchSection" class="graphs-section" style="display: none;">
-                                <h3>Player reports per match</h3>
-                                <div class="graphs-grid one">
-                                    <div class="graph-container"><canvas id="playerReportsPerMatchChart"></canvas></div>
-                                </div>
-                            </div>
-                            <div id="all-matches-report-summary" class="report-summary" style="display: none;">
-                                <h3>Report summary, all matches</h3>
-                                <div class="summary-stats">
-                                    <div class="stat-item">
-                                        <span class="stat-label">From teammates</span>
-                                        <span class="stat-value" id="all-matches-friendly-reports">0</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">From enemies</span>
-                                        <span class="stat-value" id="all-matches-enemy-reports">0</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">Total</span>
-                                        <span class="stat-value" id="all-matches-combined-reports">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section id="moments-section" class="card main-card hidden">
-                    <div class="card-header">
-                        <h2>Match map</h2>
-                        <div class="seg small moments-switch" id="moments-switch" role="tablist">
-                            <button type="button" class="on" data-m="wards" role="tab">Map</button>
-                            <button type="button" data-m="reports" role="tab">Reports</button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div id="match-highlights" class="match-highlights hidden"></div>
-                        <div id="moments-wards" class="moments-pane"></div>
-                        <div id="moments-reports" class="moments-pane hidden"></div>
-                        <div id="moments-chat" class="moments-pane hidden"></div>
-                        <div id="moments-events" class="moments-pane hidden"></div>
-                    </div>
-                </section>
             </div>
 
             <div class="tab-content" id="chat-tab">
@@ -753,15 +626,17 @@
 
     <div class="chat-tip hidden" id="chat-tip"></div>
 
-    <script src="vendor/chart.umd.min.js?v=4.4.0"></script>
     <script src="trial.js?v=88"></script>
-    <script src="replays.js?v=1"></script>
-    <script src="app.js?v=89"></script>
+    <script src="heroes.js?v=1"></script>
+    <script src="reports.js?v=1"></script>
+    <script src="replays.js?v=2"></script>
+    <script src="app.js?v=90"></script>
+    <script src="match.js?v=1"></script>
     <script src="chatwheel.js?v=88"></script>
-    <script src="ledger.js?v=88"></script>
+    <script src="ledger.js?v=89"></script>
     <script src="tools.js?v=88"></script>
     <script src="chat.js?v=89"></script>
-    <script src="share.js?v=88"></script>
+    <script src="share.js?v=89"></script>
     <script src="profile.js?v=88"></script>
     <script src="desktop.js?v=2"></script>
 </body>

@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.43.2",
+  "version": "2.44.0",
   "engineRev": "14",
-  "releaseNotes": "The \"Sign out on this PC?\" question opens over the profile, not behind it.",
-  "releaseNotesRu": "Вопрос «Выйти на этом ПК?» открывается поверх профиля, а не за ним.",
+  "releaseNotes": "New match page: who reported whom on a timeline of every player, likely reports with the reasons, players, match facts and the map.",
+  "releaseNotesRu": "Новая страница матча: кто кого репортил на таймлайне всех игроков, вероятные репорты с причинами, игроки, факты о матче и карта.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",

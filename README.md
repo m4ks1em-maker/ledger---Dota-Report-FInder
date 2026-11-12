@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/версия-2.43.2-c7a05a?style=flat-square" alt="Версия">
+  <img src="https://img.shields.io/badge/версия-2.44.0-c7a05a?style=flat-square" alt="Версия">
   <img src="https://img.shields.io/badge/платформа-Windows-2d2d2d?style=flat-square&logo=windows&logoColor=white" alt="Windows">
   <img src="https://img.shields.io/badge/движок-свой%20·%20Go%20·%20manta-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Свой движок на Go">
   <img src="https://img.shields.io/badge/дизайн-как%20клиент%20Dota%202-c7a05a?style=flat-square" alt="Дизайн как клиент Dota 2">
