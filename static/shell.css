@@ -107,3 +107,8 @@ body.dt-shell .main-header { display: none !important; }
 .dtp-none { padding: 26px; text-align: center; color: #6b7781; font-size: 14px; }
 .dtp-foot { display: flex; gap: 18px; padding: 10px 16px; border-top: 1px solid #ffffff10; font-size: 12px; color: #6b7781; }
 .dtp-foot i { font-style: normal; margin-left: 4px; }
+
+.dt-from { margin-left: auto; font: 700 11px 'Inter Tight', sans-serif; color: #ecc96c; padding: 2px 7px; border-radius: 999px; background: #ecc96c14; border: 1px solid #ecc96c33; }
+.dt-from:empty { display: none; }
+.dt-key { cursor: pointer; transition: border-color .2s, transform .2s; } .dt-key:hover { border-color: #ecc96c77; transform: translateY(-1px); }
+@media (max-width: 1100px) { .dt-from { display: none; } }

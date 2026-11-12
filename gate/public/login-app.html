@@ -7,7 +7,8 @@
     <title>DotaTraker</title>
     <link rel="icon" href="/img/logo-64.png" type="image/png">
     <link rel="stylesheet" href="/fonts.css?v=89">
-    <link rel="stylesheet" href="/gate/login-app.css?v=1">
+    <link rel="stylesheet" href="/prices.css?v=1">
+    <link rel="stylesheet" href="/gate/login-app.css?v=2">
     <script src="/i18n.js?v=79"></script>
 </head>
 <body>
@@ -76,7 +77,11 @@
             <span id="trial-title" data-t="trial">Попробовать через Steam</span><small id="trial-sub" data-t="trialSub">2 реплея в день</small>
         </a>
 
-        <div class="la-chips"><span><b id="c-days">30 дней</b><i data-t="chipKey">срок ключа</i></span><span><b data-t="chipPc">1 ПК</b><i data-t="chipPcSub">на ключ</i></span><span><b data-t="chipOff">72 ч</b><i data-t="chipOffSub">без интернета</i></span></div>
+        <section class="la-prices">
+            <div class="la-ph"><b data-t="pricesTitle">Тарифы</b><span data-t="pricesSub">нажми на срок — откроется Telegram с готовым сообщением</span></div>
+            <div class="dtpr-grid" id="prices"></div>
+            <div class="la-facts"><span data-t="fact1">1 ключ = 1 ПК</span><i>·</i><span data-t="fact2">72 ч без интернета</span><i>·</i><span data-t="fact3">ключ приходит сразу</span></div>
+        </section>
 
         <div class="la-foot">
             <span class="la-ok" id="srv"><i></i><span data-t="srvOk">Сервер ключей онлайн</span></span>
@@ -84,6 +89,7 @@
         </div>
     </section>
 </main>
-<script src="/gate/login-app.js?v=1"></script>
+<script src="/prices.js?v=1"></script>
+<script src="/gate/login-app.js?v=2"></script>
 </body>
 </html>

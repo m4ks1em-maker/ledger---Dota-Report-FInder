@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.42.4",
+  "version": "2.43.0",
   "engineRev": "14",
-  "releaseNotes": "Discord status: \"Playing DotaTraker\" with the logo, \"In a match · hero\" during games.",
-  "releaseNotesRu": "Статус в Discord: «Играет в DotaTraker» с лого, во время игры «В матче · герой».",
+  "releaseNotes": "Pricing: tariff cards on the key screen and a Pricing window in the menu (also from the key card); a card opens Telegram with the message ready.",
+  "releaseNotesRu": "Тарифы: карточки цен на экране ключа и окно «Тарифы» в меню (и по карточке ключа); клик открывает Telegram с готовым сообщением.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",
