@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.42.0",
+  "version": "2.42.1",
   "engineRev": "14",
-  "releaseNotes": "New Replays page (filters, search, hero cards, match history with download all) and quick search Ctrl+K.",
-  "releaseNotesRu": "Новая страница «Реплеи» (фильтры, поиск, карточки с героями, история матчей со «Скачать все») и быстрый поиск Ctrl+K.",
+  "releaseNotes": "Discord status: \"Playing DotaTraker\" with the logo, \"In a match · hero\" during games.",
+  "releaseNotesRu": "Статус в Discord: «Играет в DotaTraker» с лого, во время игры «В матче · герой».",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",
