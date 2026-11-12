@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.45.0",
+  "version": "2.45.1",
   "engineRev": "14",
-  "releaseNotes": "Settings, Steam sign-in and the Steam conduct summary rewritten; the summary now finds who reported you in those matches. The last code from the old web interface is gone.",
-  "releaseNotesRu": "Настройки, вход Steam-бота и отчёт о поведении Steam переписаны. Отчёт теперь сам находит, кто тебя репортил в этих матчах. Кода старого веб-интерфейса больше нет.",
+  "releaseNotes": "The match timeline is simple now: one match bar and a card per report at its minute, with your deaths on the bar. The old per-player view is behind \"In detail\".",
+  "releaseNotesRu": "Таймлайн матча стал простым: одна полоса матча и карточка на каждый репорт в его минуту, на полосе твои смерти. Старый вид по всем игрокам — по кнопке «Подробно».",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",
