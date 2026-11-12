@@ -1903,6 +1903,8 @@ html[data-theme="light"] .mv-art-fig { filter: drop-shadow(0 14px 28px rgba(30, 
 @media (prefers-reduced-motion: reduce) { .mv-art-fig.ready { animation: none; } .mv-hero-tag { animation: none; } }
 
 /* ===== Profile ===== */
+/* confirm dialogs ("Sign out on this PC?") open over the profile, not under it */
+.dialog-back:not(.pf-back) { z-index: 240; }
 .pf-back { z-index: 220; padding: 24px; overflow-y: auto; place-items: start center; background: rgba(4, 7, 11, 0.6); }
 .pf {
     --pf-c: var(--accent); --pf-glow: rgba(216, 180, 90, 0.45);

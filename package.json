@@ -1,9 +1,9 @@
 {
   "name": "dotatraker",
-  "version": "2.43.1",
+  "version": "2.43.2",
   "engineRev": "14",
-  "releaseNotes": "Windows app: Steam sign-in opens in your own browser. Chat works right after the Steam sign-in.",
-  "releaseNotesRu": "Программа: вход через Steam открывается в твоём браузере. Чат работает сразу после входа через Steam.",
+  "releaseNotes": "The \"Sign out on this PC?\" question opens over the profile, not behind it.",
+  "releaseNotesRu": "Вопрос «Выйти на этом ПК?» открывается поверх профиля, а не за ним.",
   "private": true,
   "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
   "license": "MIT",
