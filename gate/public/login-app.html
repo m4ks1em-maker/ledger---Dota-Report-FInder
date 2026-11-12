@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>DotaTraker</title>
+    <link rel="icon" href="/img/logo-64.png" type="image/png">
+    <link rel="stylesheet" href="/fonts.css?v=89">
+    <link rel="stylesheet" href="/gate/login-app.css?v=1">
+    <script src="/i18n.js?v=79"></script>
+</head>
+<body>
+<main class="la">
+    <!-- left: what you get after signing in -->
+    <section class="la-prev" aria-hidden="true">
+        <div class="la-grid"></div>
+        <div class="la-brand">
+            <img src="/img/logo-192.webp" alt="" width="46" height="46">
+            <div><h1>Dota<span>Traker</span></h1><small data-t="tag">Кто кинул на тебя репорт — по минутам, прямо из реплея</small></div>
+        </div>
+        <div class="la-app">
+            <div class="la-ah">
+                <img data-hero="terrorblade" alt="">
+                <div><b>Terrorblade <i class="la-win" data-t="win">ПОБЕДА</i></b><small>41:27 · Ranked · 14 / 3 / 9</small></div>
+                <div class="la-rc"><b>2</b><span data-t="reportsOnYou">репорта<br>на тебя</span></div>
+            </div>
+            <div class="la-ab">
+                <div class="la-map">
+                    <img class="la-hp" data-hero="terrorblade" style="left:18%;top:68%" alt="">
+                    <img class="la-hp" data-hero="lion" style="left:43%;top:54%" alt="">
+                    <img class="la-hp e" data-hero="axe" style="left:68%;top:18%" alt="">
+                    <span class="la-rp" style="left:28%;top:43%">1</span><span class="la-rp" style="left:60%;top:68%">2</span>
+                </div>
+                <div class="la-tl">
+                    <div class="la-ev"><code>28:14</code><img data-hero="axe" alt=""><span><b data-t="report">Репорт</b> · Axe</span><i data-t="chat">чат</i></div>
+                    <div class="la-ev"><code>33:50</code><img data-hero="lion" alt=""><span><b data-t="report">Репорт</b> · Lion</span><i data-t="griefing">ломает игру</i></div>
+                    <div class="la-ev g"><code>39:02</code><img data-hero="pudge" alt=""><span><b data-t="commend">Похвала</b> · Pudge</span><i data-t="leader">лидер</i></div>
+                    <div class="la-ev n"><code>40:11</code><img data-hero="earthshaker" alt=""><span data-t="smoke">Смок · Earthshaker</span><i data-t="roshan">Рошан</i></div>
+                    <div class="la-ev n"><code>41:20</code><img data-hero="terrorblade" alt=""><span data-t="throne">Трон · победа</span><i>GG</i></div>
+                </div>
+            </div>
+            <div class="la-gr"><span data-t="gold">ЗОЛОТО</span>
+                <svg viewBox="0 0 300 76" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#5fdc9a" stop-opacity=".35"/><stop offset="1" stop-color="#5fdc9a" stop-opacity="0"/></linearGradient></defs><path d="M0 56 C30 52 50 40 80 44 S130 62 160 48 220 16 250 22 290 30 300 24 L300 76 L0 76Z" fill="url(#g)"/><path d="M0 56 C30 52 50 40 80 44 S130 62 160 48 220 16 250 22 290 30 300 24" fill="none" stroke="#5fdc9a" stroke-width="2"/><line x1="205" y1="0" x2="205" y2="76" stroke="#ff5d62" stroke-dasharray="3 3"/><line x1="245" y1="0" x2="245" y2="76" stroke="#ff5d62" stroke-dasharray="3 3"/></svg>
+            </div>
+        </div>
+        <div class="la-float"><img data-hero="terrorblade" alt=""><div><b data-t="toastTitle">На тебя кинули 2 репорта</b><span data-t="toastSub">Уведомление сразу после матча</span></div></div>
+    </section>
+
+    <!-- right: the key -->
+    <section class="la-form">
+        <div class="la-step" data-t="signin">Вход</div>
+        <h2 data-t="title">Введи ключ доступа</h2>
+        <p class="la-sub" data-t="sub">Один раз — программа запомнит его до конца срока. Когда срок кончится, вернёт сюда.</p>
+
+        <div id="problem" class="la-problem hidden" role="alert"></div>
+
+        <form id="form" autocomplete="off" novalidate>
+            <div class="la-seg" id="seg">
+                <span class="px">LDG</span>
+                <input inputmode="text" maxlength="4" spellcheck="false" autocapitalize="characters" aria-label="1">
+                <input inputmode="text" maxlength="4" spellcheck="false" autocapitalize="characters" aria-label="2">
+                <input inputmode="text" maxlength="4" spellcheck="false" autocapitalize="characters" aria-label="3">
+                <input inputmode="text" maxlength="4" spellcheck="false" autocapitalize="characters" aria-label="4">
+            </div>
+            <div class="la-hint"><span data-t="paste">Можно вставить ключ целиком — <b>Ctrl+V</b></span><span id="count">0 / 16</span></div>
+            <div class="la-rem"><span class="la-lock"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+                <div><b data-t="remember">Запоминается на этом компьютере</b><span data-t="rememberSub">до конца срока ключа, даже после перезапуска</span></div></div>
+            <div id="error" class="la-error" role="alert" aria-live="polite"></div>
+            <button id="submit" class="la-gold" type="submit" disabled><span data-t="go">Войти</span> →</button>
+        </form>
+
+        <div class="la-or" data-t="or">ИЛИ</div>
+        <a class="la-ghost" id="trial" href="/_ledger/steam/start">
+            <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1b2838"/><circle cx="20.6" cy="12.4" r="4.3" fill="none" stroke="#fff" stroke-width="2"/><circle cx="11.3" cy="21.1" r="3.4" fill="none" stroke="#fff" stroke-width="2"/><path d="M2.5 17.6 9 20.3M13.8 18.6l3.7-3.3" stroke="#fff" stroke-width="2"/></svg>
+            <span id="trial-title" data-t="trial">Попробовать через Steam</span><small id="trial-sub" data-t="trialSub">2 реплея в день</small>
+        </a>
+
+        <div class="la-chips"><span><b id="c-days">30 дней</b><i data-t="chipKey">срок ключа</i></span><span><b data-t="chipPc">1 ПК</b><i data-t="chipPcSub">на ключ</i></span><span><b data-t="chipOff">72 ч</b><i data-t="chipOffSub">без интернета</i></span></div>
+
+        <div class="la-foot">
+            <span class="la-ok" id="srv"><i></i><span data-t="srvOk">Сервер ключей онлайн</span></span>
+            <span><span data-t="noKey">Нет ключа?</span> <a id="buy" href="https://t.me/m4ks1em" target="_blank" rel="noopener noreferrer" data-t="buy">Купить в Telegram</a></span>
+        </div>
+    </section>
+</main>
+<script src="/gate/login-app.js?v=1"></script>
+</body>
+</html>

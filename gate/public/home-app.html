@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>DotaTraker</title>
+    <link rel="icon" href="/img/logo-64.png" type="image/png">
+    <link rel="stylesheet" href="/fonts.css?v=89">
+    <link rel="stylesheet" href="/shell.css?v=2">
+    <script type="speculationrules">{"prerender":[{"where":{"and":[{"href_matches":"/?*"},{"not":{"href_matches":"/?open=*"}},{"not":{"selector_matches":"[target]"}}]},"eagerness":"moderate"}]}</script>
+    <link rel="stylesheet" href="/gate/home-app.css?v=3">
+    <script src="/i18n.js?v=79"></script>
+</head>
+<body class="dt-shell">
+<div class="hm">
+    <main class="hm-main">
+        <!-- last match / live match -->
+        <section class="hm-hero" id="hero">
+            <div class="hm-art" id="art"></div>
+            <div class="hm-hero-in">
+                <div class="hm-kicker" id="kicker"></div>
+                <h1 id="hname"></h1>
+                <div class="hm-line" id="hline"></div>
+                <div class="hm-acts" id="hacts"></div>
+            </div>
+        </section>
+
+        <div class="hm-head"><h2 data-t="recent">Последние матчи</h2><a href="/?tab=browse" data-t="allReplays">Все реплеи →</a></div>
+        <section class="hm-list" id="list"></section>
+    </main>
+
+    <aside class="hm-side">
+        <section class="hm-card hm-key" id="key"></section>
+        <section class="hm-card">
+            <h3 data-t="state">Состояние</h3>
+            <div class="hm-st" id="st"></div>
+        </section>
+        <section class="hm-card hm-auto">
+            <h3 data-t="auto">Авто-проверка</h3>
+            <label class="hm-sw"><span><b data-t="autoTitle">Проверять каждый матч</b><small id="auto-sub"></small></span>
+                <input type="checkbox" id="auto"><i></i></label>
+            <div class="hm-gsi hidden" id="gsi"></div>
+            <button class="hm-run" id="run" type="button"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg><span id="run-l">Проверить сейчас</span></button>
+        </section>
+        <section class="hm-card hm-upd hidden" id="upd"></section>
+    </aside>
+
+    <footer class="hm-foot">
+        <span class="hm-on" id="online"><i></i><span></span></span>
+        <span id="f-total"></span>
+        <span id="f-week"></span>
+        <span class="hm-grow"></span>
+        <span id="f-ver"></span>
+    </footer>
+</div>
+<div class="hm-toast hidden" id="toast"></div>
+<script src="/shell.js?v=2"></script>
+<script src="/gate/home-app.js?v=3"></script>
+</body>
+</html>

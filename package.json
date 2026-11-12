@@ -1,0 +1,16 @@
+{
+  "name": "dotatraker",
+  "version": "2.41.2",
+  "engineRev": "14",
+  "releaseNotes": "Windows app: \"Check for updates\" in the tray installs the new DotaTraker at once; updates install by themselves while the window is in the tray.",
+  "releaseNotesRu": "Программа для Windows: «Проверить обновления» в трее сразу ставит новую версию; пока окно в трее, обновления ставятся сами.",
+  "private": true,
+  "description": "DotaTraker: who reported whom in Dota 2 matches, behind an access key.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node gate/gate.js"
+  }
+}

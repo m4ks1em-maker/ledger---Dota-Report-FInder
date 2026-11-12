@@ -1,0 +1,232 @@
+/* ======================================================================================
+   DOTA CLIENT SKIN (2.36) — the dark theme, made to look like the Dota 2 client:
+   near-black panels, thin bronze frames with gold corner brackets, uppercase tracking,
+   gold primary buttons, flat tabs with a gold underline. Loaded after style.css and
+   written with the same :root:not([data-theme="light"]) prefix, so it wins on ties.
+   The light theme keeps its own look.
+   ====================================================================================== */
+:root:not([data-theme="light"]) {
+    --bg: #0a0b0d; --bg-2: #111317;
+    --glass: rgba(20, 22, 26, 0.94); --glass-strong: rgba(24, 26, 30, 0.97); --glass-pop: #121418;
+    --glass-soft: rgba(199, 160, 90, 0.05); --glass-border: #34302a; --glass-edge: rgba(199, 160, 90, 0.28);
+    --hair: rgba(199, 160, 90, 0.11); --field: #0d0f12; --field-border: #3a352a; --hover: rgba(199, 160, 90, 0.07);
+    --text-primary: #ece5d4; --text-secondary: #a59e8f; --text-tertiary: #6f6a5e;
+    --accent: #c7a05a; --accent-strong: #f2d79a; --accent-ink: #1b1406; --accent-soft: rgba(199, 160, 90, 0.14); --accent-line: rgba(199, 160, 90, 0.55);
+    --radiant: #79c766; --dire: #e0574a; --aegis: #e9c868;
+    --radiant-soft: rgba(121, 199, 102, 0.14); --dire-soft: rgba(224, 87, 74, 0.15); --aegis-soft: rgba(233, 200, 104, 0.14);
+    --cv-bg: transparent; --cv-row: rgba(255, 255, 255, 0.025); --cv-line: #3a352a; --cv-grid: rgba(199, 160, 90, 0.07); --cv-chip: #1d1f23; --cv-halo: #0a0b0d;
+    --r-xl: 4px; --r-lg: 3px; --r-md: 2px; --r-sm: 2px;
+    --frame: #3a352a;
+    --panel: linear-gradient(180deg, rgba(24, 26, 30, 0.95), rgba(13, 14, 17, 0.96));
+    --panel-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(199, 160, 90, 0.1), 0 22px 50px -24px #000;
+    --corners:
+        linear-gradient(var(--accent), var(--accent)) 0 0 / 14px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 0 0 / 2px 14px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 100% 100% / 14px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 100% 100% / 2px 14px no-repeat;
+    --lg-mat: var(--panel); --lg-shadow: var(--panel-shadow); --lg-blur: none;
+    --lg-pill: #121418; --lg-pill-shadow: inset 0 0 0 1px var(--frame);
+    --lg-on: linear-gradient(0deg, rgba(199, 160, 90, 0.2), rgba(199, 160, 90, 0.04)); --lg-on-shadow: inset 0 -2px 0 var(--accent);
+    --lg-track: #0d0f12; --lg-track-shadow: inset 0 0 0 1px var(--frame), inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+:root:not([data-theme="light"]) body { background: radial-gradient(120% 80% at 85% 0%, #1b232b 0%, #0a0b0d 55%) fixed, #0a0b0d; }
+
+/* backdrop: your last hero, sharp, on the right, fading into black like the client's hero screen */
+:root:not([data-theme="light"]) .lg-bg img { width: 64vw; height: 100vh; left: auto; right: -4vw; top: 0; object-fit: cover; object-position: center 12%; filter: saturate(0.9) brightness(0.62) contrast(1.05); }
+:root:not([data-theme="light"]) .lg-bg img.on { opacity: 0.55; }
+:root:not([data-theme="light"]) .lg-bg::after { background: linear-gradient(90deg, #0a0b0d 30%, rgba(10, 11, 13, 0.75) 55%, rgba(10, 11, 13, 0.25)), linear-gradient(0deg, #0a0b0d 4%, transparent 45%); }
+:root:not([data-theme="light"]) .aurora { display: none; }
+
+/* panels */
+:root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) .tile, :root:not([data-theme="light"]) .setup-panel, :root:not([data-theme="light"]) .conduct-scorecard-banner,
+:root:not([data-theme="light"]) .account-pop, :root:not([data-theme="light"]) .dialog, :root:not([data-theme="light"]) .toast, :root:not([data-theme="light"]) .match-verdict {
+    background: var(--panel); border: 1px solid var(--frame); border-radius: 3px; box-shadow: var(--panel-shadow);
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+:root:not([data-theme="light"]) .card::before, :root:not([data-theme="light"]) .tile::before { background: radial-gradient(520px circle at var(--mx, 50%) var(--my, 0%), rgba(199, 160, 90, 0.06), transparent 45%); }
+:root:not([data-theme="light"]) .main-card::after, :root:not([data-theme="light"]) .match-verdict::after {
+    display: block; content: ""; position: absolute; inset: -2px; pointer-events: none; z-index: 3; background: var(--corners); filter: none; opacity: 1;
+}
+:root:not([data-theme="light"]) .card .card, :root:not([data-theme="light"]) .card .tile { background: rgba(255, 255, 255, 0.022); border: 1px solid #2a2720; border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6); }
+
+/* type: uppercase, heavy, tracked */
+:root:not([data-theme="light"]) .card-header h2, :root:not([data-theme="light"]) .main-card > .card-header h2, :root:not([data-theme="light"]) .card:not(.main-card) > .card-header h2 {
+    font: 900 1.28rem/1.1 var(--font-ui); text-transform: uppercase; letter-spacing: 0.05em; color: #f6efdf; text-shadow: 0 2px 0 #000;
+}
+:root:not([data-theme="light"]) .t-eyebrow, :root:not([data-theme="light"]) .mv-eyebrow, :root:not([data-theme="light"]) .ms-label, :root:not([data-theme="light"]) .bot-eyebrow, :root:not([data-theme="light"]) .pl-eyebrow, :root:not([data-theme="light"]) .hint {
+    text-transform: uppercase; letter-spacing: 0.18em; font-weight: 800; font-size: 0.7rem; color: var(--accent);
+}
+:root:not([data-theme="light"]) .t-lookup h2, :root:not([data-theme="light"]) h1 { font-weight: 900; text-transform: uppercase; letter-spacing: 0.005em; color: #f6efdf; text-shadow: 0 2px 0 #000; }
+:root:not([data-theme="light"]) .kpi, :root:not([data-theme="light"]) .stat-value, :root:not([data-theme="light"]) .hs-cell .kpi, :root:not([data-theme="light"]) .pl-stat b, :root:not([data-theme="light"]) .ward-stat b { font-weight: 900; letter-spacing: -0.01em; color: var(--accent-strong); }
+:root:not([data-theme="light"]) .hs-cell span, :root:not([data-theme="light"]) .pl-stat span, :root:not([data-theme="light"]) .ward-stat span { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.68rem; font-weight: 800; color: var(--text-tertiary); }
+:root:not([data-theme="light"]) .rep-head-t, :root:not([data-theme="light"]) .pt-head, :root:not([data-theme="light"]) .graph-title, :root:not([data-theme="light"]) .pl-h3, :root:not([data-theme="light"]) .pl-col h3 { text-transform: uppercase; letter-spacing: 0.1em; font: 900 0.86rem var(--font-ui); color: #f6efdf; }
+:root:not([data-theme="light"]) .brand-name { font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* header: a solid client bar across the window, gold hairline, flat tabs */
+:root:not([data-theme="light"]) .main-header { background: transparent; border: 0; box-shadow: none; }
+:root:not([data-theme="light"]) .main-header::before {
+    top: -14px; bottom: -10px; -webkit-mask: none; mask: none; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    background: linear-gradient(180deg, rgba(22, 25, 29, 0.97), rgba(13, 14, 17, 0.97));
+    box-shadow: 0 1px 0 #000, inset 0 -1px 0 rgba(199, 160, 90, 0.35), 0 16px 30px -18px #000;
+}
+:root:not([data-theme="light"]) .workflow-tabs { background: transparent; border: 0; box-shadow: none; padding: 0; gap: 0; border-radius: 0; }
+:root:not([data-theme="light"]) .workflow-tab {
+    border-radius: 0; clip-path: none; height: 46px; padding: 0 16px; background: transparent; box-shadow: none;
+    color: #8d8778; font: 800 0.72rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.14em; border-bottom: 2px solid transparent;
+}
+:root:not([data-theme="light"]) .workflow-tab:hover:not(.active) { color: #e8e0cc; background: rgba(199, 160, 90, 0.05); }
+:root:not([data-theme="light"]) .workflow-tab.active { color: var(--accent-strong); background: linear-gradient(0deg, rgba(199, 160, 90, 0.16), transparent); border-bottom-color: var(--accent); box-shadow: none; }
+:root:not([data-theme="light"]) .workflow-tab.active .tab-icon svg { stroke: var(--accent-strong); }
+:root:not([data-theme="light"]) .workflow-tabs .glider, :root:not([data-theme="light"]) .workflow-tabs [class*="glider"] { display: none; }
+:root:not([data-theme="light"]) .lx-switch, :root:not([data-theme="light"]) .status-badge, :root:not([data-theme="light"]) .account-chip, :root:not([data-theme="light"]) .icon-btn {
+    background: #121418; border: 1px solid var(--frame); border-radius: 2px; box-shadow: inset 0 0 0 1px #000; backdrop-filter: none;
+}
+:root:not([data-theme="light"]) .lx-switch button { border-radius: 1px; }
+:root:not([data-theme="light"]) .lx-switch button.on { background: linear-gradient(180deg, #2a2620, #1b1915); color: var(--accent-strong); box-shadow: inset 0 -2px 0 var(--accent); }
+
+/* buttons */
+:root:not([data-theme="light"]) .btn { border-radius: 2px; clip-path: none; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 900; font-size: 0.78rem; }
+:root:not([data-theme="light"]) .primary-btn, :root:not([data-theme="light"]) .bot-open, :root:not([data-theme="light"]) .bot-foot .large-btn {
+    background: linear-gradient(180deg, #f1d48d, #b98a3b); color: #1b1406; border: 1px solid #6f5420;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 22px -8px var(--accent);
+}
+:root:not([data-theme="light"]) .primary-btn:hover:not(:disabled) { background: linear-gradient(180deg, #f7e0a6, #c99a48); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 0 28px -6px var(--accent); }
+:root:not([data-theme="light"]) .secondary-btn, :root:not([data-theme="light"]) .small-btn, :root:not([data-theme="light"]) .lk-form .btn:not(.primary-btn), :root:not([data-theme="light"]) .done-bar button:not(.x), :root:not([data-theme="light"]) .bot-channel {
+    background: linear-gradient(180deg, #1c1e22, #121418); border: 1px solid var(--frame); color: #e3dccb; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); border-radius: 2px;
+}
+:root:not([data-theme="light"]) .secondary-btn:hover:not(:disabled), :root:not([data-theme="light"]) .small-btn:hover:not(:disabled) { border-color: var(--accent-line); color: var(--accent-strong); background: linear-gradient(180deg, #24221d, #161512); }
+:root:not([data-theme="light"]) .danger-btn { border-radius: 2px; background: linear-gradient(180deg, #5a1f1a, #3a1310); border: 1px solid #7a2a22; color: #ffd5cf; }
+
+/* fields */
+:root:not([data-theme="light"]) input[type="text"], :root:not([data-theme="light"]) input[type="password"], :root:not([data-theme="light"]) input[type="number"], :root:not([data-theme="light"]) input[type="search"],
+:root:not([data-theme="light"]) select, :root:not([data-theme="light"]) textarea, :root:not([data-theme="light"]) .replay-search input, :root:not([data-theme="light"]) .lk-form input {
+    background: #0d0f12; border: 1px solid var(--frame); border-radius: 2px; box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7); color: #e3dccb;
+}
+:root:not([data-theme="light"]) input:focus, :root:not([data-theme="light"]) select:focus, :root:not([data-theme="light"]) textarea:focus { border-color: var(--accent); box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(199, 160, 90, 0.35); }
+:root:not([data-theme="light"]) .lk-form .btn, :root:not([data-theme="light"]) .pl-form .btn { border-radius: 2px; }
+
+/* segmented switches: flat tabs with a gold underline */
+:root:not([data-theme="light"]) .graph-view-selector, :root:not([data-theme="light"]) .moments-switch, :root:not([data-theme="light"]) .tools-switch, :root:not([data-theme="light"]) .mf-seg,
+:root:not([data-theme="light"]) .mfeed-head, :root:not([data-theme="light"]) .adv-sw, :root:not([data-theme="light"]) .seg {
+    background: #0d0f12; border: 1px solid var(--frame); border-radius: 2px; box-shadow: inset 0 0 0 1px #000; padding: 2px; gap: 2px;
+}
+:root:not([data-theme="light"]) .graph-view-tab, :root:not([data-theme="light"]) .moments-switch button, :root:not([data-theme="light"]) .tools-switch button, :root:not([data-theme="light"]) .mf-seg button,
+:root:not([data-theme="light"]) .mfeed-head button, :root:not([data-theme="light"]) .adv-sw button, :root:not([data-theme="light"]) .seg button {
+    border-radius: 1px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; font-size: 0.68rem; color: #8d8778; background: transparent; box-shadow: none;
+}
+:root:not([data-theme="light"]) .graph-view-tab.active, :root:not([data-theme="light"]) .moments-switch button.on, :root:not([data-theme="light"]) .tools-switch button.on, :root:not([data-theme="light"]) .mf-seg button.on,
+:root:not([data-theme="light"]) .mfeed-head button.on, :root:not([data-theme="light"]) .adv-sw button.on, :root:not([data-theme="light"]) .seg button.on {
+    background: linear-gradient(0deg, rgba(199, 160, 90, 0.22), rgba(199, 160, 90, 0.04)); color: var(--accent-strong); box-shadow: inset 0 -2px 0 var(--accent);
+}
+:root:not([data-theme="light"]) .mfeed-head { border-width: 0 0 1px; border-radius: 0; padding: 6px 8px; }
+
+/* chips and tags: squared */
+:root:not([data-theme="light"]) .rep-lvl, :root:not([data-theme="light"]) .rp-tag, :root:not([data-theme="light"]) .tl-wl, :root:not([data-theme="light"]) .lk-wl, :root:not([data-theme="light"]) .rep-tag, :root:not([data-theme="light"]) .ev-chip, :root:not([data-theme="light"]) .tag,
+:root:not([data-theme="light"]) .hl-chip, :root:not([data-theme="light"]) .cs-chip, :root:not([data-theme="light"]) .pl-chip, :root:not([data-theme="light"]) .pl-res, :root:not([data-theme="light"]) .pl-mc i, :root:not([data-theme="light"]) .pl-links a,
+:root:not([data-theme="light"]) .pl-verdict, :root:not([data-theme="light"]) .lvl, :root:not([data-theme="light"]) .tm, :root:not([data-theme="light"]) .chip, :root:not([data-theme="light"]) .mm-speed, :root:not([data-theme="light"]) .mm-fights,
+:root:not([data-theme="light"]) .mm-fights button, :root:not([data-theme="light"]) .mm-play, :root:not([data-theme="light"]) .rh .rk, :root:not([data-theme="light"]) .fe-ic, :root:not([data-theme="light"]) .chat-badge {
+    border-radius: 2px;
+}
+:root:not([data-theme="light"]) .lk-wl, :root:not([data-theme="light"]) .tl-wl, :root:not([data-theme="light"]) .pl-res { text-transform: uppercase; letter-spacing: 0.12em; font-weight: 900; background: transparent; padding-left: 0; padding-right: 0; }
+:root:not([data-theme="light"]) .hl-chip, :root:not([data-theme="light"]) .cs-chip { background: linear-gradient(180deg, #17191d, #101215); border: 1px solid var(--frame); box-shadow: inset 0 0 0 1px #000; }
+
+/* lists */
+:root:not([data-theme="light"]) .replay-list, :root:not([data-theme="light"]) .lk-rows { background: #0d0f12; border: 1px solid var(--frame); border-radius: 2px; box-shadow: inset 0 0 0 1px #000; }
+:root:not([data-theme="light"]) .lk-row, :root:not([data-theme="light"]) .replay-item { border-color: #22201b; }
+:root:not([data-theme="light"]) .lk-row:hover, :root:not([data-theme="light"]) .replay-item:hover { background: rgba(199, 160, 90, 0.05); }
+:root:not([data-theme="light"]) .replay-item:has(input:checked) { background: linear-gradient(90deg, rgba(199, 160, 90, 0.12), transparent 70%); box-shadow: inset 2px 0 0 var(--accent); }
+:root:not([data-theme="light"]) .pl-match, :root:not([data-theme="light"]) .re-row, :root:not([data-theme="light"]) .pl-group { border-radius: 2px; border-color: #2a2720; background: rgba(255, 255, 255, 0.02); }
+:root:not([data-theme="light"]) .pl-match:hover { background: rgba(199, 160, 90, 0.06); border-color: var(--frame); }
+:root:not([data-theme="light"]) .pl-hero, :root:not([data-theme="light"]) .re-card { border-radius: 3px; border-color: var(--frame); }
+
+/* match screen pieces */
+:root:not([data-theme="light"]) .matchmap-wrap, :root:not([data-theme="light"]) .mm-panel, :root:not([data-theme="light"]) .mfeed, :root:not([data-theme="light"]) .ward-stat, :root:not([data-theme="light"]) .mm-adv {
+    border-radius: 2px; border: 1px solid var(--frame); background: var(--panel); box-shadow: var(--panel-shadow);
+}
+:root:not([data-theme="light"]) .matchmap-wrap { padding: 5px; }
+:root:not([data-theme="light"]) .matchmap-wrap::after { display: block; inset: -2px; border-radius: 0; background: var(--corners); filter: none; opacity: 1; }
+:root:not([data-theme="light"]) .matchmap { border-radius: 1px; }
+:root:not([data-theme="light"]) .mm-play { background: linear-gradient(180deg, #f1d48d, #b98a3b); border: 1px solid #6f5420; }
+:root:not([data-theme="light"]) .mm-clock b { color: var(--accent-strong); text-shadow: 0 0 14px rgba(199, 160, 90, 0.35); }
+:root:not([data-theme="light"]) .rh { border-radius: 2px; }
+:root:not([data-theme="light"]) .rh img, :root:not([data-theme="light"]) .rh > span { border-radius: 1px; }
+:root:not([data-theme="light"]) .fe { border-radius: 1px; }
+:root:not([data-theme="light"]) .fe.now { background: linear-gradient(90deg, rgba(199, 160, 90, 0.16), transparent); box-shadow: inset 2px 0 0 var(--accent); }
+:root:not([data-theme="light"]) .fe.fight { border-radius: 2px; }
+:root:not([data-theme="light"]) .match-verdict .mv-title, :root:not([data-theme="light"]) #mv-title { text-transform: uppercase; font-weight: 900; letter-spacing: 0.02em; }
+:root:not([data-theme="light"]) .tile.ms-tile, :root:not([data-theme="light"]) #match-stats > * { border-radius: 2px; }
+
+/* the "done" bar and toasts */
+:root:not([data-theme="light"]) #ledger-done.done-bar:not(.hidden) { border-radius: 3px; background: linear-gradient(180deg, #1a1c20, #0f1013); border: 1px solid var(--frame); box-shadow: var(--panel-shadow); backdrop-filter: none; }
+
+/* chat */
+:root:not([data-theme="light"]) .chat-layout aside, :root:not([data-theme="light"]) #chat-members { border-radius: 3px; }
+:root:not([data-theme="light"]) .chat-av { border-radius: 3px; }
+
+/* scrollbars in the client's style */
+:root:not([data-theme="light"]) ::-webkit-scrollbar { width: 10px; height: 10px; }
+:root:not([data-theme="light"]) ::-webkit-scrollbar-track { background: #0d0f12; }
+:root:not([data-theme="light"]) ::-webkit-scrollbar-thumb { background: #3a352a; border: 2px solid #0d0f12; border-radius: 1px; }
+:root:not([data-theme="light"]) ::-webkit-scrollbar-thumb:hover { background: #5a4e36; }
+
+@media (max-width: 760px) {
+    :root:not([data-theme="light"]) .main-header .workflow-tabs { background: #121418; border: 1px solid var(--frame); border-radius: 3px; box-shadow: 0 18px 40px -16px #000; }
+    :root:not([data-theme="light"]) .main-header .workflow-tab { border-radius: 0; padding: 0 12px; }
+    :root:not([data-theme="light"]) .lg-bg img { width: 100vw; right: 0; opacity: 0.3; }
+}
+
+/* fixes after the first look */
+:root:not([data-theme="light"]) .hs-cell span.hs-label { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.68rem; font-weight: 800; color: var(--text-tertiary); }
+:root:not([data-theme="light"]) .hs-cell span.kpi { text-transform: none; letter-spacing: -0.01em; font-size: 2.1rem; color: var(--accent-strong); }
+:root:not([data-theme="light"]) .hs-cell.bad span.kpi { color: var(--dire); }
+
+/* match header: with the flow chart gone, the four tiles fill the height next to the verdict */
+.mt-main > .match-stats { flex: 1; grid-auto-rows: 1fr; }
+.mt-main > .match-stats > * { display: flex; flex-direction: column; justify-content: space-between; }
+.match-top > .match-verdict { min-height: 380px; }
+:root:not([data-theme="light"]) .match-stats .ms-value, :root:not([data-theme="light"]) .match-stats b { font-size: clamp(2rem, 3.2vw, 2.8rem); font-weight: 900; }
+
+/* ===== profile window in the client's style ===== */
+:root:not([data-theme="light"]) .pf {
+    border-radius: 3px; border: 1px solid var(--frame);
+    background: linear-gradient(180deg, #16181c, #0c0d10);
+    box-shadow: inset 0 0 0 1px #000, inset 0 1px 0 rgba(199, 160, 90, 0.12), 0 50px 120px -30px #000;
+}
+:root:not([data-theme="light"]) .pf::after { inset: -2px; border-radius: 0; opacity: 1; z-index: 5;
+    background: linear-gradient(var(--accent), var(--accent)) 0 0 / 16px 2px no-repeat, linear-gradient(var(--accent), var(--accent)) 0 0 / 2px 16px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 100% 100% / 16px 2px no-repeat, linear-gradient(var(--accent), var(--accent)) 100% 100% / 2px 16px no-repeat; }
+:root:not([data-theme="light"]) .pf-banner { height: 250px; background: radial-gradient(90% 120% at 78% 0%, #1f2a33, #0c0d10 65%); border-bottom: 1px solid #22201b; }
+:root:not([data-theme="light"]) .pf-banner-glow { opacity: 0.35; }
+:root:not([data-theme="light"]) .pf-banner-sigil { border-radius: 2px; opacity: 0.18; }
+:root:not([data-theme="light"]) .pf-banner-shade { background: linear-gradient(180deg, rgba(12, 13, 16, 0) 35%, #101114 100%), linear-gradient(90deg, rgba(12, 13, 16, 0.9), rgba(12, 13, 16, 0) 55%); }
+:root:not([data-theme="light"]) .pf-banner-hero small { color: var(--accent); letter-spacing: 0.24em; }
+:root:not([data-theme="light"]) .pf-banner-hero b { font: 900 1.6rem/1.05 var(--font-ui); text-transform: uppercase; letter-spacing: 0.02em; color: #f6efdf; text-shadow: 0 2px 0 #000; }
+:root:not([data-theme="light"]) .pf-banner-hero em { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.7rem; font-weight: 800; color: var(--text-tertiary); }
+:root:not([data-theme="light"]) .pf-x { border-radius: 2px; border: 1px solid var(--frame); background: linear-gradient(180deg, #1c1e22, #121418); color: var(--accent-strong); box-shadow: inset 0 0 0 1px #000; backdrop-filter: none; }
+:root:not([data-theme="light"]) .pf-x:hover { transform: none; border-color: var(--accent); background: linear-gradient(180deg, #2a2620, #17150f); }
+:root:not([data-theme="light"]) .pf-ava { border-radius: 4px; padding: 3px; box-shadow: 0 0 26px var(--pf-glow), 0 16px 34px rgba(0, 0, 0, 0.7); }
+:root:not([data-theme="light"]) .pf-ava img, :root:not([data-theme="light"]) .pf-ava span { border-radius: 2px; }
+:root:not([data-theme="light"]) .pf-id h2 { font: 900 clamp(1.6rem, 3.4vw, 2.3rem)/1.05 var(--font-ui); text-transform: uppercase; letter-spacing: 0.02em; color: #f6efdf; text-shadow: 0 2px 0 #000; }
+:root:not([data-theme="light"]) .pf-tier { border-radius: 2px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 16px -4px var(--pf-glow); }
+:root:not([data-theme="light"]) .pf-sid { border-radius: 2px; border-color: var(--frame); background: #0d0f12; }
+:root:not([data-theme="light"]) .pf-since { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.68rem; font-weight: 800; }
+:root:not([data-theme="light"]) .pf-card, :root:not([data-theme="light"]) .pf-stat {
+    border-radius: 2px; border: 1px solid #2a2720; background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.7);
+}
+:root:not([data-theme="light"]) .pf-card h3, :root:not([data-theme="light"]) .pf-ach-head h3 { color: var(--accent); letter-spacing: 0.22em; }
+:root:not([data-theme="light"]) .pf-sub-big { font-weight: 900; text-transform: uppercase; letter-spacing: 0.02em; }
+:root:not([data-theme="light"]) .pf-renew { border-radius: 2px; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.74rem; font-weight: 800; }
+:root:not([data-theme="light"]) .pf-key dt { color: var(--text-secondary); }
+:root:not([data-theme="light"]) .pf-key dl > * { border-color: #22201b; }
+:root:not([data-theme="light"]) .pf-stat::before { width: 2px; border-radius: 0; }
+:root:not([data-theme="light"]) .pf-stat b { font-weight: 900; color: #f6efdf; }
+:root:not([data-theme="light"]) .pf-stat span { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.66rem; font-weight: 800; color: var(--text-tertiary); }
+:root:not([data-theme="light"]) .pf-ach-bar { border-radius: 0; height: 4px; background: #0d0f12; box-shadow: inset 0 0 0 1px #000; }
+:root:not([data-theme="light"]) .pf-ach-bar i { border-radius: 0; background: linear-gradient(90deg, #b98a3b, #f1d48d); }
+:root:not([data-theme="light"]) .pf-a { border-radius: 2px; border-color: #22201b; background: rgba(255, 255, 255, 0.015); }
+:root:not([data-theme="light"]) .pf-a.done { background: linear-gradient(90deg, var(--cs), rgba(255, 255, 255, 0.01) 75%); border-color: color-mix(in srgb, var(--c) 35%, #2a2720); box-shadow: inset 2px 0 0 var(--c); }
+:root:not([data-theme="light"]) .pf-a-ic { border-radius: 2px; }
+:root:not([data-theme="light"]) .pf-a-text b { text-transform: uppercase; letter-spacing: 0.06em; font-weight: 900; font-size: 0.8rem; }
+:root:not([data-theme="light"]) .pf-a-prog, :root:not([data-theme="light"]) .pf-a-prog i { border-radius: 0; }
+:root:not([data-theme="light"]) .pf-a-ok { border-radius: 2px; }
+:root:not([data-theme="light"]) .pf-hater, :root:not([data-theme="light"]) .pf-note { border-radius: 2px; }

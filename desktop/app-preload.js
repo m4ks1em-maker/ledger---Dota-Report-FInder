@@ -1,0 +1,1 @@
+"use strict";const{contextBridge:e,ipcRenderer:p}=require("electron");e.exposeInMainWorld("dtApp",{version:p.sendSync("app:version"),getUpdate:()=>p.invoke("app:update:get"),installUpdate:()=>p.invoke("app:update:install"),onUpdate:e=>p.on("app:update",((p,n)=>e(n))),hide:()=>p.invoke("app:hide")});

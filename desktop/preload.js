@@ -1,0 +1,1 @@
+"use strict";const{contextBridge:e,ipcRenderer:s}=require("electron");e.exposeInMainWorld("dt",{on:e=>s.on("splash",((s,i)=>e(i))),retry:()=>s.invoke("splash:retry"),install:()=>s.invoke("splash:install"),pick:()=>s.invoke("splash:pick"),log:()=>s.invoke("splash:log"),quit:()=>s.invoke("splash:quit")});

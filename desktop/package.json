@@ -1,0 +1,56 @@
+{
+  "name": "dotatraker-desktop",
+  "productName": "DotaTraker",
+  "version": "1.2.1",
+  "description": "DotaTraker for Windows: the app in its own window, in the tray, with notifications.",
+  "author": "m4ks1em",
+  "license": "MIT",
+  "main": "boot.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8",
+    "resedit": "2.0.3"
+  },
+  "build": {
+    "appId": "com.m4ks1em.dotatraker",
+    "productName": "DotaTraker",
+    "artifactName": "DotaTraker-Setup-${version}.${ext}",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "boot.js",
+      "main.js",
+      "preload.js",
+      "app-preload.js",
+      "discord.js",
+      "splash.html",
+      "build/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DotaTraker",
+      "runAfterFinish": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "afterPack": "./afterPack.js"
+  },
+  "repository": "github:m4ks1em-maker/ledger---Dota-Report-FInder",
+  "shellApi": 1
+}
