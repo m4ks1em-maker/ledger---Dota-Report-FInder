@@ -112,6 +112,9 @@ button { font: inherit; color: inherit; }
 .hm-gsi button, .hm-gsi a.b { flex: none; padding: 0 12px; border-radius: 8px; border: 1px solid #ffffff22; background: #ffffff0c; cursor: pointer; font-size: 12.5px; font-weight: 600; display: grid; place-items: center; }
 .hm-gsi a.b.wide { flex: 1; height: 34px; } .hm-gsi .hint { margin-top: 6px; font-size: 12px; color: #9f9677; }
 .hm-gsi.ok { background: #2fae6a0f; border-color: #2fae6a44; color: #a9dcc0; }
+.hm-gsi.warn { background: #e5484d12; border-color: #e5484d55; color: #f1c4c6; }
+.hm-gsi .hint code { display: inline-block; vertical-align: bottom; max-width: 100%; flex: none; padding: 1px 6px; border-radius: 5px; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-gsi .hint.ok { color: #7fd6a4; }
 .hm-upd { border-color: #2fae6a44; background: linear-gradient(160deg, #0f2219, var(--card) 70%); }
 .hm-upd h3 { color: var(--green); } .hm-upd .v { font: 700 28px 'Unbounded', sans-serif; } .hm-upd p { margin: 6px 0 12px; color: #b7c2cb; font-size: 13.5px; line-height: 1.45; }
 .hm-bar { height: 6px; border-radius: 6px; background: #ffffff12; overflow: hidden; margin: 4px 0 8px; } .hm-bar i { display: block; height: 100%; width: 0; background: var(--green); transition: width .3s; }
