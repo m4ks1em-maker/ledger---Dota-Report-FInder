@@ -54,6 +54,10 @@
                     <span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 4.3 2.9 11.4c-.9.4-.9 1.6.1 1.9l4.6 1.5 1.8 5.6c.3.8 1.3 1 1.9.4l2.6-2.5 4.9 3.6c.7.5 1.6.1 1.8-.7l3.2-15.2c.2-1-.8-1.8-1.7-1.5z"/></svg></span>
                     <span class="tab-label">Bot</span>
                 </button>
+                <button class="workflow-tab tab-dsc" data-tab="discord" role="tab" title="Discord">
+                    <span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-1v3l-4-3H8a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M6 9H5a2 2 0 0 0-2 2v6l3-2h7"/></svg></span>
+                    <span class="tab-label">Discord</span>
+                </button>
                 <button class="workflow-tab tab-tools" data-tab="tools" role="tab" title="Tools">
                     <span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M4 12h16M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="14" cy="18" r="2"/></svg></span>
                     <span class="tab-label">Tools</span>
@@ -445,6 +449,121 @@
                 </div>
             </div>
 
+            <div class="tab-content" id="discord-tab">
+                <div class="dsc">
+                    <div class="dsc-aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+
+                    <header class="dsc-hero">
+                        <div class="dsc-badge" aria-hidden="true">
+                            <img src="/img/logo-192.webp" alt="" width="112" height="112">
+                            <span class="dsc-pip"><svg viewBox="0 0 24 24"><path d="M8 5h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-1v3l-4-3H8a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M6 9H5a2 2 0 0 0-2 2v6l3-2h7"/></svg></span>
+                        </div>
+                        <span class="dsc-eyebrow"><i class="dsc-live" aria-hidden="true"></i><span>Discord server</span></span>
+                        <h1 class="dsc-name">DotaTraker <em>Community</em></h1>
+                        <p class="dsc-tag">Support, a party finder and a DM with the result of every match — all on one Discord server.</p>
+                        <div class="dsc-cta">
+                            <a class="btn dsc-join" href="https://discord.gg/TsZPg2r4fh" target="_blank" rel="noopener noreferrer">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-1v3l-4-3H8a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M6 9H5a2 2 0 0 0-2 2v6l3-2h7"/></svg>
+                                <span>Join the server</span>
+                            </a>
+                            <button type="button" class="btn dsc-copy" id="dsc-copy" data-invite="https://discord.gg/TsZPg2r4fh">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+                                <span>Copy invite</span>
+                            </button>
+                        </div>
+                        <a class="dsc-handle" href="https://discord.gg/TsZPg2r4fh" target="_blank" rel="noopener noreferrer">discord.gg/TsZPg2r4fh</a>
+                    </header>
+
+                    <section class="dsc-show">
+                        <div class="dsc-feats">
+                            <article class="dsc-feat" style="--c:#e5484d">
+                                <span class="dsc-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></span>
+                                <h3>Match result in DM</h3>
+                                <p>After every auto-checked match the bot DMs you: were there reports, who most likely sent them, your hero and K/D/A.</p>
+                            </article>
+                            <article class="dsc-feat" style="--c:#b48cff">
+                                <span class="dsc-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3l3 18 3-18"/></svg></span>
+                                <h3>Buyer role</h3>
+                                <p>Link your key and get the Buyer role, private channels and a reminder before the key runs out.</p>
+                            </article>
+                            <article class="dsc-feat" style="--c:#5fdc9a">
+                                <span class="dsc-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 16 0v4a2 2 0 0 1-2 2h-1v-6h3M4 12v4a2 2 0 0 0 2 2h1v-6H4"/></svg></span>
+                                <h3>Private support</h3>
+                                <p>Open a ticket in one click — only you and the team see it. A bug, a key, a question: answered right there.</p>
+                            </article>
+                            <article class="dsc-feat" style="--c:#7c8cff">
+                                <span class="dsc-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9.5" r="2.4"/><path d="M3 19c.6-3 3-4.6 6-4.6s5.4 1.6 6 4.6M15 15c2.6-.2 4.8.9 5.6 3.6"/></svg></span>
+                                <h3>Party finder</h3>
+                                <p>Post a card with the mode, rank and roles you need. Players reply in one click; the card closes itself in 3 hours.</p>
+                            </article>
+                            <article class="dsc-feat" style="--c:#f2c46d">
+                                <span class="dsc-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.8z"/></svg></span>
+                                <h3>Levels and top</h3>
+                                <p>Earn XP for chatting, climb the server top and unlock roles as you level up.</p>
+                            </article>
+                            <article class="dsc-feat" style="--c:#37bbf3">
+                                <span class="dsc-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>
+                                <h3>News first</h3>
+                                <p>New DotaTraker versions and Dota 2 patches are posted the moment they drop.</p>
+                            </article>
+                        </div>
+
+                        <div class="dsc-mock" aria-hidden="true">
+                            <div class="dsm-top"><span class="dsm-at">@</span><b>DotaTraker</b><span class="dsm-bot">BOT</span><span class="dsm-dm">Direct message</span></div>
+                            <div class="dsm-feed">
+                                <div class="dsm-row">
+                                    <img src="/img/logo-64.png" alt="" width="36" height="36">
+                                    <div class="dsm-body">
+                                        <div class="dsm-who"><b>DotaTraker</b><span class="dsm-bot">BOT</span><time>Today at 21:47</time></div>
+                                        <div class="dsm-embed" style="--bar:#e5484d">
+                                            <b class="dsm-title">🚨 2 reports on you</b>
+                                            <p>The replay shows it for sure.</p>
+                                            <p>Match <b>8571234567</b></p>
+                                            <div class="dsm-fields">
+                                                <div><small>🦸 Hero</small><span>Invoker</span></div>
+                                                <div><small>🏁 Result</small><span>Defeat</span></div>
+                                                <div><small>⚔️ K/D/A</small><span>7/9/12</span></div>
+                                                <div><small>⏱ Duration</small><span>41:08</span></div>
+                                                <div class="dsm-wide"><small>👤 Who</small><span>Kasper, ezzz</span></div>
+                                            </div>
+                                            <div class="dsm-foot">DotaTraker · details and timeline in the app</div>
+                                        </div>
+                                        <div class="dsm-btns"><span>📊 OpenDota</span><span>📈 Dotabuff</span></div>
+                                    </div>
+                                </div>
+                                <div class="dsm-row dsm-next">
+                                    <span class="dsm-gap"></span>
+                                    <div class="dsm-body">
+                                        <div class="dsm-embed" style="--bar:#5fdc9a">
+                                            <b class="dsm-title">✅ Clean match</b>
+                                            <p>No signs of reports on you. Keep it up!</p>
+                                            <div class="dsm-fields">
+                                                <div><small>🦸 Hero</small><span>Lion</span></div>
+                                                <div><small>🏁 Result</small><span>Victory</span></div>
+                                                <div><small>⚔️ K/D/A</small><span>4/3/21</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="dsc-steps">
+                        <div class="dsc-step"><span class="dsc-n">1</span><div><b>Join the server</b><p>Press the button — Discord opens the invite.</p></div></div>
+                        <div class="dsc-step"><span class="dsc-n">2</span><div><b>Press Join in #welcome</b><p>Accept the rules and the channels open.</p></div></div>
+                        <div class="dsc-step"><span class="dsc-n">3</span><div><b>Link your key: /ключ</b><p>Paste the key — you get the Buyer role and match DMs. Keep DMs from server members on.</p></div></div>
+                    </section>
+
+                    <div class="dsc-foot">
+                        <a class="btn dsc-join large-btn" href="https://discord.gg/TsZPg2r4fh" target="_blank" rel="noopener noreferrer">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-1v3l-4-3H8a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M6 9H5a2 2 0 0 0-2 2v6l3-2h7"/></svg>
+                            <span>Join DotaTraker on Discord</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <div class="tab-content" id="tools-tab">
                 <div class="tools-wrap">
                     <div class="tools-switch" role="tablist" aria-label="Tool">
@@ -610,6 +729,7 @@
     <script src="share.js?v=89"></script>
     <script src="profile.js?v=88"></script>
     <script src="desktop.js?v=2"></script>
+    <script src="community.js?v=1"></script>
 </body>
 
 </html>

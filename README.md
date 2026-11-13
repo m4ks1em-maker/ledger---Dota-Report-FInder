@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/версия-2.45.2-c7a05a?style=flat-square" alt="Версия">
+  <img src="https://img.shields.io/badge/версия-2.45.3-c7a05a?style=flat-square" alt="Версия">
   <img src="https://img.shields.io/badge/платформа-Windows-2d2d2d?style=flat-square&logo=windows&logoColor=white" alt="Windows">
   <img src="https://img.shields.io/badge/движок-свой%20·%20Go%20·%20manta-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Свой движок на Go">
   <img src="https://img.shields.io/badge/дизайн-как%20клиент%20Dota%202-c7a05a?style=flat-square" alt="Дизайн как клиент Dota 2">
@@ -15,6 +15,7 @@
 
 <p align="center">
   <a href="https://t.me/m4ks1em"><img src="https://img.shields.io/badge/Купить_ключ-@m4ks1em-2AABEE?style=for-the-badge&logo=telegram&logoColor=white" alt="Купить ключ в Telegram"></a>
+  <a href="https://discord.gg/TsZPg2r4fh"><img src="https://img.shields.io/badge/Discord-сервер-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord-сервер DotaTraker"></a>
   &nbsp;
   <a href="https://github.com/m4ks1em-maker/ledger---Dota-Report-FInder/releases/latest/download/DotaTraker-Setup.exe"><img src="https://img.shields.io/badge/Скачать_для_Windows-DotaTraker--Setup.exe-ecc96c?style=for-the-badge&logo=windows&logoColor=black" alt="Скачать DotaTraker для Windows"></a>
 </p>
@@ -198,7 +199,7 @@ DotaTraker смотрит на то, что в реплее осталось: к
 
 ## 👤 Автор
 
-**DotaTraker** создал и развивает **Макс** — [@m4ks1em](https://t.me/m4ks1em) · [GitHub](https://github.com/m4ks1em-maker).
+**DotaTraker** создал и развивает **Макс** — [@m4ks1em](https://t.me/m4ks1em) · [Discord](https://discord.gg/TsZPg2r4fh) · [GitHub](https://github.com/m4ks1em-maker).
 Дизайн, движок разбора реплеев, сервер ключей, вход через Steam, общий чат и обновления — его работа.
 
 <sub>© 2026 Макс (m4ks1em). Все права защищены. Сторонние компоненты и их лицензии: <a href="NOTICE.md">NOTICE.md</a>.</sub>

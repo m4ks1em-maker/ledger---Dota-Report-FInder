@@ -1,6 +1,6 @@
 {
   "name": "dotatraker",
-  "version": "2.45.2",
+  "version": "2.45.3",
   "engineRev": "14",
   "releaseNotes": "After every auto-checked match, DotaTraker can send the result to your Discord DMs: link your key on the DotaTraker Discord server.",
   "releaseNotesRu": "После каждого матча из авто-проверки DotaTraker может прислать итог в личку Discord: привяжи ключ на Discord-сервере DotaTraker.",
